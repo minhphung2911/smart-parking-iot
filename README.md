@@ -8,14 +8,28 @@ Hệ thống Quản lý Bãi đậu xe thông minh (Smart Parking) tập trung v
 
 Gồm phần cứng Arduino (cảm biến IR), mô phỏng Proteus, ứng dụng WinForms và database lưu trữ.
 
-##  Thành viên phân công
+##  Thành viên phân công (3-tier)
 
 | Module | Người phụ trách |
 |--------|----------------|
 | `arduino/` + `proteus/` | Người 1 |
-| `backend/` + `database/` | Người 2 |
-| `winforms/` | Người 2 + Người 3 |
+| `backend/` (ASP.NET API) | Người 2 |
+| `winforms/` + `database/` | Người 2 |
 | `web/` | Người 3 |
+
+##  Kiến trúc hệ thống
+```
+┌─────────────┐     ┌─────────────────┐     ┌─────────────┐
+│  WinForms   │────▶│  ASP.NET API    │────▶│   MySQL     │
+│   (C#)      │     │    (C#)         │     │  (Database) │
+└─────────────┘     └─────────────────┘     └─────────────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │   Arduino   │
+                    │  (Serial)   │
+                    └─────────────┘
+```
 
 ##  Cấu trúc thư mục
 
@@ -29,10 +43,11 @@ smart-parking/
 │       ├── parking.pdsprj
 │       ├── parking.DSN
 │       └── backup/
-├── backend/          # API backend (Python)
-│   ├── services/
-│   ├── models/
-│   └── serial/
+├── backend/          # API backend (ASP.NET Core C#)
+│   ├── Controllers/
+│   ├── Models/
+│   ├── Services/
+│   └── SmartParkingApi.csproj
 ├── winforms/         # Ứng dụng C# WinForms
 │   └── README.md
 ├── web/              # Giao diện web
