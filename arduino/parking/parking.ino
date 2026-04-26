@@ -16,6 +16,7 @@ Servo gate;
 #define S2 13
 #define S3 A0
 #define S4 A1
+#define S5 A2
 
 #define SERVO_PIN 3
 
@@ -23,17 +24,21 @@ Servo gate;
 #define F_ENTER 10
 #define F_BACK  11
 
-int fakeSlotPins[4] = {12, 13, A0, A1};
+int fakeSlotPins[5] = {12, 13, A0, A1, A2};
 
 // ===== BIẾN =====
 bool lastEnter = HIGH;
 bool lastBack  = HIGH;
 
-int slots[4];
+int slots[5];
 int emptySlots = 0;
 
 unsigned long lastEvent = 0;
 int interval = 3000;
+
+// ===== MODE: AUTO/MANUAL =====
+bool autoMode = true;  // Default: AUTO mode (random)
+bool manualSlotChange = false;  // Flag khi có lệnh manual
 
 void setup() {
   Serial.begin(9600);
@@ -45,12 +50,13 @@ void setup() {
   pinMode(S2, INPUT);
   pinMode(S3, INPUT);
   pinMode(S4, INPUT);
+  pinMode(S5, INPUT);
 
   // OUTPUT fake sensor
   pinMode(F_ENTER, OUTPUT);
   pinMode(F_BACK, OUTPUT);
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     pinMode(fakeSlotPins[i], OUTPUT);
     digitalWrite(fakeSlotPins[i], HIGH); // mặc định trống
   }
@@ -69,11 +75,37 @@ void setup() {
 
 void loop() {
 
-  // ===== RANDOM XE (DÒNG XE THẬT) =====
-  if (millis() - lastEvent > interval) {
+  // ===== NHẬN LỆNH TỪ WINFORMS =====
+  if (Serial.available()) {
+    String cmd = Serial.readStringUntil('\n');
+    cmd.trim();
+    
+    if (cmd == "MODE:AUTO") {
+      autoMode = true;
+      Serial.println("MODE:OK");
+    }
+    else if (cmd == "MODE:MANUAL") {
+      autoMode = false;
+      Serial.println("MODE:OK");
+    }
+    else if (cmd.startsWith("SLOT:")) {
+      // Lệnh manual: SLOT:0,1 (set slot 0 = 1 = occupied)
+      int slotIndex = cmd.substring(5, 6).toInt();
+      int slotValue = cmd.substring(7, 8).toInt();
+      
+      if (slotIndex >= 0 && slotIndex < 5) {
+        digitalWrite(fakeSlotPins[slotIndex], slotValue == 1 ? LOW : HIGH);
+        manualSlotChange = true;
+        Serial.println("SLOT:OK");
+      }
+    }
+  }
+
+  // ===== AUTO MODE: RANDOM XE =====
+  if (autoMode && millis() - lastEvent > interval) {
 
     int cars = 0;
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < 5; i++) {
       if (digitalRead(fakeSlotPins[i]) == LOW) cars++;
     }
 
@@ -89,17 +121,17 @@ void loop() {
       int event;
 
       if (cars == 0) event = 0;          // Full trống -> chỉ có thể vào
-      else if (cars == 4) event = 1;     // Full xe -> chỉ có thể ra
+      else if (cars == 5) event = 1;     // Full xe -> chỉ có thể ra
       else event = random(0, 2);         // Random vào hoặc ra
 
-      if (event == 0 && cars < 4) {
+      if (event == 0 && cars < 5) {
         // ENTRY
         digitalWrite(F_ENTER, LOW);
         delay(50);
         digitalWrite(F_ENTER, HIGH);
 
         // chiếm slot trống đầu tiên
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
           if (digitalRead(fakeSlotPins[i]) == HIGH) {
             digitalWrite(fakeSlotPins[i], LOW);
             cars++;
@@ -114,7 +146,7 @@ void loop() {
         digitalWrite(F_BACK, HIGH);
 
         // giải phóng slot đầu tiên
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 5; i++) {
           if (digitalRead(fakeSlotPins[i]) == LOW) {
             digitalWrite(fakeSlotPins[i], HIGH);
             cars--;
@@ -124,7 +156,7 @@ void loop() {
       }
     }
 
-    interval = random(1000, 3000);  // Giảm xuống 1-3s để dòng xe liên tục hơn
+    interval = random(1000, 3000);
     lastEvent = millis();
   }
 
@@ -133,10 +165,11 @@ void loop() {
   slots[1] = digitalRead(S2);
   slots[2] = digitalRead(S3);
   slots[3] = digitalRead(S4);
+  slots[4] = digitalRead(S5);
 
   // ===== ĐẾM SLOT =====
   emptySlots = 0;
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     if (slots[i] == HIGH) emptySlots++;
   }
 
@@ -144,7 +177,8 @@ void loop() {
   lcd.clear();
 
   lcd.setCursor(0, 0);
-  lcd.print("Have Slot: ");
+  lcd.print(autoMode ? "[AUTO] " : "[MAN] ");
+  lcd.print("Slot:");
   lcd.print(emptySlots);
 
   lcd.setCursor(0, 1);
@@ -158,6 +192,10 @@ void loop() {
   lcd.print(slots[2] == HIGH ? "Empty " : "Fill ");
   lcd.print("S4:");
   lcd.print(slots[3] == HIGH ? "Empty" : "Fill");
+
+  lcd.setCursor(0, 3);
+  lcd.print("S5:");
+  lcd.print(slots[4] == HIGH ? "Empty" : "Fill");
 
   // ===== ENTRY =====
   int currentEnter = digitalRead(IR_ENTER);
@@ -191,11 +229,13 @@ void loop() {
 
   // ===== GỬI SLOT =====
   Serial.print("SLOTS:");
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < 5; i++) {
     Serial.print(slots[i]);
-    if (i < 3) Serial.print(",");
+    if (i < 4) Serial.print(",");
   }
-  Serial.println();
+  Serial.print(",MODE:");
+  Serial.println(autoMode ? "AUTO" : "MANUAL");
 
+  manualSlotChange = false;
   delay(300);
 }
