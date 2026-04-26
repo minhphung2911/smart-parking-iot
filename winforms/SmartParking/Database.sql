@@ -1,4 +1,4 @@
-CREATE DATABASE ParkingDB;
+﻿CREATE DATABASE ParkingDB;
 GO
 
 USE ParkingDB;
@@ -8,5 +8,6 @@ CREATE TABLE ParkingLog (
     Plate NVARCHAR(50),
     TimeIn DATETIME,
     TimeOut DATETIME,
+    SlotNumber INT,
     Fee FLOAT
 );
