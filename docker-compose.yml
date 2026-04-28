@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # 1. SQL Server Database
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: smartparking_db
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourPassword123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD", "/opt/mssql-tools18/bin/sqlcmd", "-S", "localhost", "-U", "sa", "-P", "YourPassword123!", "-Q", "SELECT 1", "-No"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Database Initializer (Seeder)
+  # This container waits for the DB to be ready, then runs the init.sql script
+  db-init:
+    image: mcr.microsoft.com/mssql-tools:latest
+    container_name: smartparking_db_init
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./database/init.sql:/init.sql
+    command: >
+      /bin/bash -c "
+      echo 'Running Database Initialization Script...' &&
+      /opt/mssql-tools/bin/sqlcmd -S db -U sa -P YourPassword123! -d master -i /init.sql -C &&
+      echo 'Database Initialization Completed Successfully!'
+      "
+
+  # 3. Backend (ASP.NET Core Web API)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: smartparking_backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=db;Database=SmartParkingDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True
+    ports:
+      - "3000:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 4. Frontend (Vite React UI built and hosted via Nginx)
+  frontend:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: smartparking_frontend
+    ports:
+      - "5174:80"
+    depends_on:
+      - backend
+
+volumes:
+  sqlserver_data:
