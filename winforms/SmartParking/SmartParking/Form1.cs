@@ -254,7 +254,7 @@ namespace SmartParking
                             string p = r.GetString(2);
                             r.Close();
 
-                            double fee = Math.Max(1, Math.Ceiling((DateTime.Now - tIn).TotalHours)) * 5000;
+                            double fee = Math.Max(1, Math.Ceiling((DateTime.Now - tIn).TotalHours)) * 10000;
                             int duration = (int)(DateTime.Now - tIn).TotalMinutes;
                             totalRevenue += fee;
                             

@@ -267,7 +267,7 @@
             // === LOGS GROUP ===
             this.grpLogs.Location = new System.Drawing.Point(20, 375);
             this.grpLogs.Size = new System.Drawing.Size(760, 200);
-            this.grpLogs.Text = "📝 Nhật ký hoạt động (5,000 VND/giờ)";
+            this.grpLogs.Text = "📝 Nhật ký hoạt động (10,000 VND/giờ)";
             this.grpLogs.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
 
             this.lvLogs.Dock = System.Windows.Forms.DockStyle.Fill;
