@@ -10,33 +10,46 @@ namespace SmartParking
     public partial class Form1 : Form
     {
         // --- CẤU HÌNH HỆ THỐNG ---
-        // Đổi COM3 thành cổng thực tế bạn dùng trong Proteus (ví dụ COM1, COM2...)
         SerialPort serial = new SerialPort("COM3", 9600);
 
-        // Chuỗi kết nối SQL Server LocalDB
         string connStr = @"Data Source=(localdb)\ProjectModels;Initial Catalog=ParkingDB;Integrated Security=True";
 
-        // Quản lý 4 ô đỗ xe (Slots)
-        Panel[] slotPanels = new Panel[4];
+        // Quản lý 5 ô đỗ xe (Slots)
+        Panel[] slotPanels = new Panel[5];
         bool isAutoMode = true; // Mặc định là chế độ AUTO
+
+        // Khung log
+        private TextBox logTextBox;
+        private static readonly Random random = new Random();
 
         public Form1()
         {
             InitializeComponent();
-            InitSlotUI(); // Vẽ 4 ô đỗ xe lên giao diện
+            InitSlotUI(); // Vẽ 5 ô đỗ xe lên giao diện
 
             // Thiết lập nhận dữ liệu từ Arduino
             serial.DataReceived += Serial_DataReceived;
             try { if (!serial.IsOpen) serial.Open(); } catch { }
 
             LoadData(); // Tải dữ liệu từ SQL lên bảng hiển thị
+
+            // Thêm khung log vào cuối form
+            logTextBox = new TextBox
+            {
+                Multiline = true,
+                ReadOnly = true,
+                ScrollBars = ScrollBars.Vertical,
+                Dock = DockStyle.Bottom,
+                Height = 120
+            };
+            this.Controls.Add(logTextBox);
         }
 
         // --- GIAO DIỆN (UI) ---
-        // Hàm này tự động tạo 4 ô vuông xanh trên màn hình khi nhấn Start
+        // Hàm này tự động tạo 5 ô vuông xanh trên màn hình khi nhấn Start
         void InitSlotUI()
         {
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 5; i++)
             {
                 Panel p = new Panel
                 {
@@ -62,7 +75,7 @@ namespace SmartParking
             }
         }
 
-        // --- XỬ LÝ SỰ KIỆN NÚT BẤM (Sửa lỗi CS1061) ---
+        // --- XỬ LÝ SỰ KIỆN NÚT BẤM ---
 
         // 1. Nút Vào Cổng (Entry)
         private void btnEntry_Click(object sender, EventArgs e)
@@ -70,6 +83,7 @@ namespace SmartParking
             if (!string.IsNullOrEmpty(txtPlate.Text))
             {
                 XeVao(txtPlate.Text);
+                WriteLog($"Xe vào (thủ công) - Biển số: {txtPlate.Text}");
                 txtPlate.Clear();
             }
             else
@@ -88,7 +102,11 @@ namespace SmartParking
                 string q = "SELECT TOP 1 SlotNumber FROM ParkingLog WHERE TimeOut IS NULL ORDER BY TimeIn ASC";
                 SqlCommand cmd = new SqlCommand(q, conn);
                 object result = cmd.ExecuteScalar();
-                if (result != null) XeRaTheoSlot((int)result);
+                if (result != null)
+                {
+                    XeRaTheoSlot((int)result);
+                    WriteLog($"Xe ra khỏi slot {result}");
+                }
                 else MessageBox.Show("Không còn xe nào trong bãi!");
             }
         }
@@ -116,13 +134,15 @@ namespace SmartParking
 
             if (p.BackColor == Color.LightGreen)
             {
-                string randomPlate = "51A-" + new Random().Next(10000, 99999).ToString();
+                string randomPlate = GenerateRandomLicensePlate();
                 XeVao(randomPlate, slotNum);
+                WriteLog($"Xe vào slot {slotNum} - Biển số: {randomPlate}");
                 if (serial.IsOpen) serial.WriteLine("OPEN_GATE");
             }
             else
             {
                 XeRaTheoSlot(slotNum);
+                WriteLog($"Xe ra khỏi slot {slotNum}");
                 if (serial.IsOpen) serial.WriteLine("OPEN_GATE");
             }
         }
@@ -134,7 +154,7 @@ namespace SmartParking
             int slotToAssign = manualSlot;
             if (slotToAssign == -1)
             {
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 5; i++)
                     if (slotPanels[i].BackColor == Color.LightGreen) { slotToAssign = i + 1; break; }
             }
 
@@ -151,6 +171,7 @@ namespace SmartParking
                     cmd.Parameters.AddWithValue("@s", slotToAssign);
                     cmd.ExecuteNonQuery();
                 }
+                WriteLog($"Xe vào slot {slotToAssign} - Biển số: {plate}");
                 LoadData();
             }
             catch (Exception ex) { MessageBox.Show("Lỗi SQL: " + ex.Message); }
@@ -181,6 +202,7 @@ namespace SmartParking
                         uc.Parameters.AddWithValue("@id", id);
                         uc.ExecuteNonQuery();
                         MessageBox.Show($"Xe {p} ra bãi. Phí: {fee:N0} VNĐ");
+                        WriteLog($"Xe {p} ra khỏi slot {slot}. Phí: {fee:N0} VNĐ");
                     }
                     r.Close();
                 }
@@ -205,7 +227,7 @@ namespace SmartParking
         void UpdateSlots(string status)
         {
             string[] s = status.Split(',');
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 5; i++)
             {
                 // Arduino: HIGH (1) là trống, LOW (0) là có xe
                 slotPanels[i].BackColor = (s[i] == "1") ? Color.LightGreen : Color.IndianRed;
@@ -231,6 +253,21 @@ namespace SmartParking
                 }
             }
             catch { }
+        }
+
+        // --- HÀM RANDOM BIỂN SỐ XE ---
+        private string GenerateRandomLicensePlate()
+        {
+            string provinceCode = random.Next(10, 99).ToString();
+            char letter = (char)random.Next('A', 'Z' + 1);
+            int number = random.Next(10000, 99999);
+            return $"{provinceCode}{letter}-{number}";
+        }
+
+        // --- HÀM GHI LOG ---
+        private void WriteLog(string message)
+        {
+            logTextBox.AppendText($"{DateTime.Now:HH:mm:ss} - {message}{Environment.NewLine}");
         }
     }
 }
