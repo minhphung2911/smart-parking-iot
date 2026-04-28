@@ -49,18 +49,23 @@ namespace SmartParking
         // Hàm này tự động tạo 5 ô vuông xanh trên màn hình khi nhấn Start
         void InitSlotUI()
         {
+            int slotWidth = 60;   // Giảm kích thước ô
+            int slotHeight = 60;
+            int slotSpacing = 15; // Giảm khoảng cách giữa các ô
+            int startLeft = 220;  // Đưa vị trí bắt đầu sang trái
+
             for (int i = 0; i < 5; i++)
             {
                 Panel p = new Panel
                 {
-                    Width = 80,
-                    Height = 80,
+                    Width = slotWidth,
+                    Height = slotHeight,
                     BackColor = Color.LightGreen,
-                    Left = 220 + (i * 90),
+                    Left = startLeft + (i * (slotWidth + slotSpacing)),
                     Top = 80,
                     Tag = i + 1
                 };
-                p.Click += SlotPanel_Click; // Sự kiện Click cho chế độ Manual
+                p.Click += SlotPanel_Click;
 
                 Label lbl = new Label
                 {
@@ -74,6 +79,7 @@ namespace SmartParking
                 slotPanels[i] = p;
             }
         }
+
 
         // --- XỬ LÝ SỰ KIỆN NÚT BẤM ---
 
