@@ -1,4 +1,4 @@
-#include <Wire.h>
+﻿#include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include <Servo.h>
 
@@ -26,7 +26,7 @@ Servo gate;
 
 int fakeSlotPins[5] = {12, 13, A0, A1, A2};
 
-// ===== BIẾN =====
+// ===== VARIABLES =====
 bool lastEnter = HIGH;
 bool lastBack  = HIGH;
 
@@ -36,9 +36,8 @@ int emptySlots = 0;
 unsigned long lastEvent = 0;
 int interval = 3000;
 
-// ===== MODE: AUTO/MANUAL =====
-bool autoMode = true;  // Default: AUTO mode (random)
-bool manualSlotChange = false;  // Flag khi có lệnh manual
+// ===== VARIABLES FLAG =====
+bool manualSlotChange = false;  // Flag when there is a manual command
 
 void setup() {
   Serial.begin(9600);
@@ -80,15 +79,7 @@ void loop() {
     String cmd = Serial.readStringUntil('\n');
     cmd.trim();
     
-    if (cmd == "MODE:AUTO") {
-      autoMode = true;
-      Serial.println("MODE:OK");
-    }
-    else if (cmd == "MODE:MANUAL") {
-      autoMode = false;
-      Serial.println("MODE:OK");
-    }
-    else if (cmd.startsWith("SLOT:")) {
+    if (cmd.startsWith("SLOT:")) {
       // Lệnh manual: SLOT:0,1 (set slot 0 = 1 = occupied)
       int slotIndex = cmd.substring(5, 6).toInt();
       int slotValue = cmd.substring(7, 8).toInt();
@@ -101,66 +92,7 @@ void loop() {
     }
   }
 
-  // ===== AUTO MODE: RANDOM XE =====
-  if (autoMode && millis() - lastEvent > interval) {
-
-    int cars = 0;
-    for (int i = 0; i < 5; i++) {
-      if (digitalRead(fakeSlotPins[i]) == LOW) cars++;
-    }
-
-    // Random số lượng xe vào/ra (phân phối tự nhiên: thường 1-2 xe, ít khi 0 hoặc 3)
-    int r = random(0, 10);
-    int numCars;
-    if (r < 2) numCars = 0;      // 20%: không có xe
-    else if (r < 6) numCars = 1;  // 40%: 1 xe
-    else if (r < 9) numCars = 2;  // 30%: 2 xe
-    else numCars = 3;             // 10%: 3 xe
-
-    for (int c = 0; c < numCars; c++) {
-      int event;
-
-      if (cars == 0) event = 0;          // Full trống -> chỉ có thể vào
-      else if (cars == 5) event = 1;     // Full xe -> chỉ có thể ra
-      else event = random(0, 2);         // Random vào hoặc ra
-
-      if (event == 0 && cars < 5) {
-        // ENTRY
-        digitalWrite(F_ENTER, LOW);
-        delay(50);
-        digitalWrite(F_ENTER, HIGH);
-
-        // chiếm slot trống đầu tiên
-        for (int i = 0; i < 5; i++) {
-          if (digitalRead(fakeSlotPins[i]) == HIGH) {
-            digitalWrite(fakeSlotPins[i], LOW);
-            cars++;
-            break;
-          }
-        }
-
-      } else if (event == 1 && cars > 0) {
-        // EXIT
-        digitalWrite(F_BACK, LOW);
-        delay(50);
-        digitalWrite(F_BACK, HIGH);
-
-        // giải phóng slot đầu tiên
-        for (int i = 0; i < 5; i++) {
-          if (digitalRead(fakeSlotPins[i]) == LOW) {
-            digitalWrite(fakeSlotPins[i], HIGH);
-            cars--;
-            break;
-          }
-        }
-      }
-    }
-
-    interval = random(1000, 3000);
-    lastEvent = millis();
-  }
-
-  // ===== ĐỌC SLOT =====
+  // ===== READ SLOTS =====
   slots[0] = digitalRead(S1);
   slots[1] = digitalRead(S2);
   slots[2] = digitalRead(S3);
@@ -177,7 +109,7 @@ void loop() {
   lcd.clear();
 
   lcd.setCursor(0, 0);
-  lcd.print(autoMode ? "[AUTO] " : "[MAN] ");
+  lcd.print("[MAN] ");
   lcd.print("Slot:");
   lcd.print(emptySlots);
 
@@ -233,8 +165,7 @@ void loop() {
     Serial.print(slots[i]);
     if (i < 4) Serial.print(",");
   }
-  Serial.print(",MODE:");
-  Serial.println(autoMode ? "AUTO" : "MANUAL");
+  Serial.println();
 
   manualSlotChange = false;
   delay(300);
