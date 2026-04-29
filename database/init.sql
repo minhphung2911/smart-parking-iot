@@ -22,7 +22,7 @@ GO
 ========================================================= */
 
 CREATE TABLE ParkingSlots (
-    SlotID INT IDENTITY PRIMARY KEY,
+    SlotID INT PRIMARY KEY,
     SlotCode NVARCHAR(10) UNIQUE NOT NULL,
     Zone NVARCHAR(10),
     FloorNo INT DEFAULT 1,
@@ -115,127 +115,27 @@ GO
 
 
 /* =========================================================
-   3. INSERT VEHICLES (30 xe)
+   3. VEHICLES - No seed data (inserted by application)
 ========================================================= */
-
-INSERT INTO Vehicles (PlateNumber, VehicleType, OwnerName, IsVIP)
-VALUES
-('67A12345','Car','Nguyen Van A',0),
-('51B45678','Car','Tran Thi B',1),
-('59C88888','Car','Le Van C',0),
-('66D77777','Car','Pham Van D',0),
-('72A11111','Car','Hoang Van E',1),
-('83B22222','Car','Vo Thi F',0),
-('94C33333','Car','Nguyen G',0),
-('68D44444','Car','Tran H',0),
-('63A55555','Car','Le I',0),
-('70B66666','Car','Pham J',1),
-
-('60A11122','Car','User11',0),
-('60A11123','Car','User12',0),
-('60A11124','Car','User13',0),
-('60A11125','Car','User14',0),
-('60A11126','Car','User15',0),
-('60A11127','Car','User16',0),
-('60A11128','Car','User17',0),
-('60A11129','Car','User18',0),
-('60A11130','Car','User19',0),
-('60A11131','Car','User20',0),
-
-('60A11132','Car','User21',0),
-('60A11133','Car','User22',0),
-('60A11134','Car','User23',0),
-('60A11135','Car','User24',0),
-('60A11136','Car','User25',0),
-('60A11137','Car','User26',0),
-('60A11138','Car','User27',0),
-('60A11139','Car','User28',0),
-('60A11140','Car','User29',0),
-('60A11141','Car','User30',0);
-GO
+-- Empty
 
 
 /* =========================================================
-   4. ACTIVE SESSIONS (xe đang đỗ)
+   4. PARKING SESSIONS - No seed data (inserted by application)
 ========================================================= */
-
-INSERT INTO ParkingSessions
-(VehicleID, SlotID, CheckInTime, DurationMinutes, Fee, Status)
-VALUES
-(1,1,DATEADD(HOUR,-2,GETDATE()),120,20,'Active'),
-(2,2,DATEADD(HOUR,-1,GETDATE()),60,10,'Active');
-GO
+-- Empty
 
 
 /* =========================================================
-   5. CLOSED SESSIONS lịch sử (40 records)
+   5. LOGS - No seed data (inserted by application)
 ========================================================= */
-
-DECLARE @i INT = 7;
-WHILE @i <= 46
-BEGIN
-    INSERT INTO ParkingSessions
-    (VehicleID, SlotID, CheckInTime, CheckOutTime, DurationMinutes, Fee, Status)
-    VALUES
-    (
-        ((@i-1)%30)+1,
-        ((@i-1)%6)+1,
-        DATEADD(DAY,-ABS(CHECKSUM(NEWID())%7),
-            DATEADD(HOUR,-ABS(CHECKSUM(NEWID())%10),GETDATE())),
-        DATEADD(DAY,-ABS(CHECKSUM(NEWID())%7),
-            DATEADD(HOUR,-ABS(CHECKSUM(NEWID())%5),GETDATE())),
-        60 + ABS(CHECKSUM(NEWID())%180),
-        10 + ABS(CHECKSUM(NEWID())%40),
-        'Closed'
-    );
-    SET @i = @i + 1;
-END
-GO
+-- Empty
 
 
 /* =========================================================
-   6. LOGS (50 records)
+   6. SYSTEM FAULTS - No seed data
 ========================================================= */
-
-DECLARE @n INT = 1;
-WHILE @n <= 50
-BEGIN
-    INSERT INTO Logs
-    (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details)
-    VALUES
-    (
-        DATEADD(MINUTE,-@n*5,GETDATE()),
-        CASE @n % 5
-            WHEN 0 THEN 'Check-in'
-            WHEN 1 THEN 'Check-out'
-            WHEN 2 THEN 'Assign'
-            WHEN 3 THEN 'Transfer'
-            ELSE 'Fault'
-        END,
-        CONCAT('60A',10000+@n),
-        CONCAT(CHAR(65 + (@n%2)), ((@n%3)+1)),
-        CASE WHEN @n % 2 = 0 THEN 'Auto Sensor' ELSE 'Admin' END,
-        CASE WHEN @n % 7 = 0 THEN 'Error' ELSE 'Success' END,
-        CONCAT('System generated event #',@n)
-    );
-    SET @n = @n + 1;
-END
-GO
-
-
-/* =========================================================
-   7. SYSTEM FAULTS (5 records)
-========================================================= */
-
-INSERT INTO SystemFaults
-(SlotID, FaultType, Description, Severity, Status)
-VALUES
-(2,'Sensor Offline','A2 sensor lost signal','High','Open'),
-(5,'Barrier Jam','Gate response delayed','Medium','Open'),
-(4,'Camera Blur','License plate camera blurry','Low','Open'),
-(2,'Connection Timeout','Controller reconnecting','Medium','Closed'),
-(5,'Power Surge','Recovered after restart','High','Closed');
-GO
+-- Empty
 
 
 /* =========================================================
