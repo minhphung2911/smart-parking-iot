@@ -22,14 +22,8 @@
 
         // --- CONTROL PANEL ---
         private System.Windows.Forms.GroupBox grpControl;
-        private System.Windows.Forms.Label lblPlate;
-        private System.Windows.Forms.TextBox txtPlate;
-        private System.Windows.Forms.Button btnEntry;
-        private System.Windows.Forms.Button btnExit;
-        private System.Windows.Forms.Button btnMode;
         private System.Windows.Forms.Button btnAutoEntry;
         private System.Windows.Forms.Button btnAutoExit;
-        private System.Windows.Forms.Label lblMode;
 
         // --- COM PORT ---
         private System.Windows.Forms.GroupBox grpComPort;
@@ -77,14 +71,8 @@
 
             // Control
             this.grpControl = new System.Windows.Forms.GroupBox();
-            this.lblPlate = new System.Windows.Forms.Label();
-            this.txtPlate = new System.Windows.Forms.TextBox();
-            this.btnEntry = new System.Windows.Forms.Button();
-            this.btnExit = new System.Windows.Forms.Button();
-            this.btnMode = new System.Windows.Forms.Button();
             this.btnAutoEntry = new System.Windows.Forms.Button();
             this.btnAutoExit = new System.Windows.Forms.Button();
-            this.lblMode = new System.Windows.Forms.Label();
 
             // COM Port
             this.grpComPort = new System.Windows.Forms.GroupBox();
@@ -213,54 +201,20 @@
 
             // === CONTROL GROUP ===
             this.grpControl.Location = new System.Drawing.Point(20, 210);
-            this.grpControl.Size = new System.Drawing.Size(520, 155);
+            this.grpControl.Size = new System.Drawing.Size(520, 110);
             this.grpControl.Text = "🎮 Điều khiển";
             this.grpControl.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
 
-            this.lblPlate.AutoSize = true;
-            this.lblPlate.Location = new System.Drawing.Point(10, 30);
-            this.lblPlate.Text = "Biển số:";
-
-            this.txtPlate.Location = new System.Drawing.Point(70, 27);
-            this.txtPlate.Size = new System.Drawing.Size(120, 25);
-
-            this.btnEntry.Location = new System.Drawing.Point(200, 25);
-            this.btnEntry.Size = new System.Drawing.Size(90, 30);
-            this.btnEntry.Text = "🚗 XE VÀO";
-            this.btnEntry.BackColor = System.Drawing.Color.LightBlue;
-
-            this.btnExit.Location = new System.Drawing.Point(300, 25);
-            this.btnExit.Size = new System.Drawing.Size(90, 30);
-            this.btnExit.Text = "🚙 XE RA";
-            this.btnExit.BackColor = System.Drawing.Color.LightPink;
-
-            this.lblMode.AutoSize = true;
-            this.lblMode.Location = new System.Drawing.Point(405, 30);
-            this.lblMode.Text = "Mode: AUTO";
-            this.lblMode.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.lblMode.ForeColor = System.Drawing.Color.Green;
-
-            this.btnMode.Location = new System.Drawing.Point(10, 65);
-            this.btnMode.Size = new System.Drawing.Size(150, 35);
-            this.btnMode.Text = "🔄 Đổi AUTO/MANUAL";
-            this.btnMode.BackColor = System.Drawing.Color.LightYellow;
-
-            this.btnAutoEntry.Location = new System.Drawing.Point(170, 65);
-            this.btnAutoEntry.Size = new System.Drawing.Size(160, 35);
+            this.btnAutoEntry.Location = new System.Drawing.Point(20, 40);
+            this.btnAutoEntry.Size = new System.Drawing.Size(220, 40);
             this.btnAutoEntry.Text = "🎲 Xe vào ngẫu nhiên";
             this.btnAutoEntry.BackColor = System.Drawing.Color.LightCyan;
 
-            this.btnAutoExit.Location = new System.Drawing.Point(340, 65);
-            this.btnAutoExit.Size = new System.Drawing.Size(160, 35);
+            this.btnAutoExit.Location = new System.Drawing.Point(250, 40);
+            this.btnAutoExit.Size = new System.Drawing.Size(220, 40);
             this.btnAutoExit.Text = "🎲 Xe ra ngẫu nhiên";
             this.btnAutoExit.BackColor = System.Drawing.Color.MistyRose;
 
-            this.grpControl.Controls.Add(this.lblPlate);
-            this.grpControl.Controls.Add(this.txtPlate);
-            this.grpControl.Controls.Add(this.btnEntry);
-            this.grpControl.Controls.Add(this.btnExit);
-            this.grpControl.Controls.Add(this.lblMode);
-            this.grpControl.Controls.Add(this.btnMode);
             this.grpControl.Controls.Add(this.btnAutoEntry);
             this.grpControl.Controls.Add(this.btnAutoExit);
 

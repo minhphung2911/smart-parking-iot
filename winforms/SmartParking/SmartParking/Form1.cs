@@ -32,9 +32,6 @@ namespace SmartParking
         void WireUpEvents()
         {
             // Control buttons
-            btnEntry.Click += btnEntry_Click;
-            btnExit.Click += btnExit_Click;
-            btnMode.Click += btnMode_Click;
             btnAutoEntry.Click += btnAutoEntry_Click;
             btnAutoExit.Click += btnAutoExit_Click;
             btnConnect.Click += btnConnect_Click;
@@ -59,12 +56,7 @@ namespace SmartParking
         // --- NÚT BẤM ---
         private void btnEntry_Click(object sender, EventArgs e)
         {
-            if (!string.IsNullOrEmpty(txtPlate.Text))
-            {
-                XeVao(txtPlate.Text);
-                txtPlate.Clear();
-            }
-            else MessageBox.Show("Vui lòng nhập biển số xe!");
+            XeVao(GenerateRandomLicensePlate());
         }
 
         private void btnExit_Click(object sender, EventArgs e)
@@ -102,9 +94,6 @@ namespace SmartParking
         private void btnMode_Click(object sender, EventArgs e)
         {
             isAutoMode = !isAutoMode;
-            lblMode.Text = isAutoMode ? "Mode: AUTO" : "Mode: MANUAL";
-            lblMode.ForeColor = isAutoMode ? Color.Green : Color.Orange;
-            btnMode.BackColor = isAutoMode ? Color.LightYellow : Color.Orange;
             if (serial.IsOpen) serial.WriteLine(isAutoMode ? "MODE:AUTO" : "MODE:MANUAL");
         }
 
