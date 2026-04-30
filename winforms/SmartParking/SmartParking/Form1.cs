@@ -178,29 +178,33 @@ namespace SmartParking
                         int vehicleId = Convert.ToInt32(vId);
                         
                         // 2. ParkingSessions
-                        string insertS = "INSERT INTO ParkingSessions (VehicleID, SlotID, CheckInTime, Status) VALUES (@v, @s, GETDATE(), 'Active')";
+                        string insertS = "INSERT INTO ParkingSessions (VehicleID, SlotID, CheckInTime, Status) VALUES (@v, @s, @now, 'Active')";
                         SqlCommand cmdS = new SqlCommand(insertS, conn, trans);
                         cmdS.Parameters.AddWithValue("@v", vehicleId);
                         cmdS.Parameters.AddWithValue("@s", slotToAssign);
+                        cmdS.Parameters.AddWithValue("@now", DateTime.UtcNow);
                         cmdS.ExecuteNonQuery();
                         
                         // 3. ParkingSlots
-                        string updateSlot = "UPDATE ParkingSlots SET Status='Occupied', LastUpdated=GETDATE() WHERE SlotID=@s";
+                        string updateSlot = "UPDATE ParkingSlots SET Status='Occupied', LastUpdated=@now WHERE SlotID=@s";
                         SqlCommand cmdSlot = new SqlCommand(updateSlot, conn, trans);
                         cmdSlot.Parameters.AddWithValue("@s", slotToAssign);
+                        cmdSlot.Parameters.AddWithValue("@now", DateTime.UtcNow);
                         cmdSlot.ExecuteNonQuery();
                         
                         // 4. Logs
-                        string insertLog = "INSERT INTO Logs (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details) VALUES (GETDATE(), 'Check-in', @p, @sc, 'WinForms', 'Success', 'Xe vao')";
+                        string insertLog = "INSERT INTO Logs (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details) VALUES (@now, 'Check-in', @p, @sc, 'WinForms', 'Success', 'Xe vao')";
                         SqlCommand cmdLog = new SqlCommand(insertLog, conn, trans);
+                        cmdLog.Parameters.AddWithValue("@now", DateTime.UtcNow);
                         cmdLog.Parameters.AddWithValue("@p", plate);
                         cmdLog.Parameters.AddWithValue("@sc", "S" + slotToAssign);
                         cmdLog.ExecuteNonQuery();
                         
                         // 5. Legacy
-                        string q = "INSERT INTO ParkingLog (Plate, TimeIn, SlotNumber) VALUES (@p, GETDATE(), @s)";
+                        string q = "INSERT INTO ParkingLog (Plate, TimeIn, SlotNumber) VALUES (@p, @now, @s)";
                         SqlCommand cmd = new SqlCommand(q, conn, trans);
                         cmd.Parameters.AddWithValue("@p", plate);
+                        cmd.Parameters.AddWithValue("@now", DateTime.UtcNow);
                         cmd.Parameters.AddWithValue("@s", slotToAssign);
                         cmd.ExecuteNonQuery();
                         
@@ -248,30 +252,34 @@ namespace SmartParking
                             totalRevenue += fee;
                             
                             // 1. ParkingSessions
-                            string updateS = "UPDATE ParkingSessions SET CheckOutTime=GETDATE(), DurationMinutes=@d, Fee=@f, Status='Closed' WHERE SlotID=@s AND Status='Active'";
+                            string updateS = "UPDATE ParkingSessions SET CheckOutTime=@now, DurationMinutes=@d, Fee=@f, Status='Closed' WHERE SlotID=@s AND Status='Active'";
                             SqlCommand cmdS = new SqlCommand(updateS, conn, trans);
+                            cmdS.Parameters.AddWithValue("@now", DateTime.UtcNow);
                             cmdS.Parameters.AddWithValue("@d", duration);
                             cmdS.Parameters.AddWithValue("@f", fee);
                             cmdS.Parameters.AddWithValue("@s", slot);
                             cmdS.ExecuteNonQuery();
                             
                             // 2. ParkingSlots
-                            string updateSlot = "UPDATE ParkingSlots SET Status='Available', LastUpdated=GETDATE() WHERE SlotID=@s";
+                            string updateSlot = "UPDATE ParkingSlots SET Status='Available', LastUpdated=@now WHERE SlotID=@s";
                             SqlCommand cmdSlot = new SqlCommand(updateSlot, conn, trans);
+                            cmdSlot.Parameters.AddWithValue("@now", DateTime.UtcNow);
                             cmdSlot.Parameters.AddWithValue("@s", slot);
                             cmdSlot.ExecuteNonQuery();
                             
                             // 3. Logs
-                            string insertLog = "INSERT INTO Logs (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details) VALUES (GETDATE(), 'Check-out', @p, @sc, 'WinForms', 'Success', @detail)";
+                            string insertLog = "INSERT INTO Logs (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details) VALUES (@now, 'Check-out', @p, @sc, 'WinForms', 'Success', @detail)";
                             SqlCommand cmdLog = new SqlCommand(insertLog, conn, trans);
+                            cmdLog.Parameters.AddWithValue("@now", DateTime.UtcNow);
                             cmdLog.Parameters.AddWithValue("@p", p);
                             cmdLog.Parameters.AddWithValue("@sc", "S" + slot);
                             cmdLog.Parameters.AddWithValue("@detail", $"Phi: {fee:N0} VND");
                             cmdLog.ExecuteNonQuery();
                             
                             // 4. Legacy
-                            string u = "UPDATE ParkingLog SET TimeOut=GETDATE(), Fee=@f WHERE Id=@id";
+                            string u = "UPDATE ParkingLog SET TimeOut=@now, Fee=@f WHERE Id=@id";
                             SqlCommand uc = new SqlCommand(u, conn, trans);
+                            uc.Parameters.AddWithValue("@now", DateTime.UtcNow);
                             uc.Parameters.AddWithValue("@f", fee);
                             uc.Parameters.AddWithValue("@id", id);
                             uc.ExecuteNonQuery();
