@@ -13,9 +13,13 @@ namespace SmartParking
         SerialPort serial = new SerialPort("COM3", 9600);
         string connStr = @"Server=localhost,1433;Database=SmartParkingDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True";
         
-        bool isAutoMode = true;
         double totalRevenue = 0;
         private static readonly Random random = new Random();
+
+        // Debounce cho cập nhật slot từ Arduino
+        private System.Windows.Forms.Timer slotUpdateTimer;
+        private string pendingSlotStatus = null;
+        private string lastAppliedSlotStatus = null;
 
         public Form1()
         {
@@ -27,6 +31,19 @@ namespace SmartParking
             
             // Setup serial
             serial.DataReceived += Serial_DataReceived;
+            
+            // Setup debounce timer (500ms) - chỉ update UI sau khi trạng thái ổn định
+            slotUpdateTimer = new System.Windows.Forms.Timer();
+            slotUpdateTimer.Interval = 500;
+            slotUpdateTimer.Tick += (s, ev) =>
+            {
+                slotUpdateTimer.Stop();
+                if (pendingSlotStatus != null && pendingSlotStatus != lastAppliedSlotStatus)
+                {
+                    ApplySlotUpdate(pendingSlotStatus);
+                    lastAppliedSlotStatus = pendingSlotStatus;
+                }
+            };
         }
 
         void WireUpEvents()
@@ -56,6 +73,7 @@ namespace SmartParking
         // --- NÚT BẤM ---
         private void btnEntry_Click(object sender, EventArgs e)
         {
+            OpenEntryGate();
             XeVao(GenerateRandomLicensePlate());
         }
 
@@ -67,13 +85,20 @@ namespace SmartParking
                 string q = "SELECT TOP 1 SlotNumber FROM ParkingLog WHERE TimeOut IS NULL ORDER BY TimeIn ASC";
                 SqlCommand cmd = new SqlCommand(q, conn);
                 object result = cmd.ExecuteScalar();
-                if (result != null) XeRaTheoSlot((int)result);
+                if (result != null)
+                {
+                    OpenExitGate();
+                    XeRaTheoSlot((int)result);
+                }
                 else MessageBox.Show("Không còn xe nào trong bãi!");
             }
         }
 
         private void btnAutoEntry_Click(object sender, EventArgs e)
         {
+            // Mở cổng vào trước
+            OpenEntryGate();
+            
             string plate = GenerateRandomLicensePlate();
             XeVao(plate);
         }
@@ -86,15 +111,14 @@ namespace SmartParking
                 string q = "SELECT TOP 1 SlotNumber FROM ParkingLog WHERE TimeOut IS NULL ORDER BY TimeIn ASC";
                 SqlCommand cmd = new SqlCommand(q, conn);
                 object result = cmd.ExecuteScalar();
-                if (result != null) XeRaTheoSlot((int)result);
+                if (result != null)
+                {
+                    // Mở cổng ra trước khi xe ra
+                    OpenExitGate();
+                    XeRaTheoSlot((int)result);
+                }
                 else MessageBox.Show("Không có xe để ra!");
             }
-        }
-
-        private void btnMode_Click(object sender, EventArgs e)
-        {
-            isAutoMode = !isAutoMode;
-            if (serial.IsOpen) serial.WriteLine(isAutoMode ? "MODE:AUTO" : "MODE:MANUAL");
         }
 
         private void btnConnect_Click(object sender, EventArgs e)
@@ -127,19 +151,15 @@ namespace SmartParking
 
         void SlotPanel_Click(int slotIndex)
         {
-            if (isAutoMode)
-            {
-                MessageBox.Show("Chuyển sang MANUAL mode để thao tác!");
-                return;
-            }
-
             if (slotPanels[slotIndex].BackColor == Color.LightGreen)
             {
+                OpenEntryGate();
                 string plate = GenerateRandomLicensePlate();
                 XeVao(plate, slotIndex + 1);
             }
             else
             {
+                OpenExitGate();
                 XeRaTheoSlot(slotIndex + 1);
             }
         }
@@ -247,8 +267,8 @@ namespace SmartParking
                             string p = r.GetString(2);
                             r.Close();
 
-                            double fee = Math.Max(1, Math.Ceiling((DateTime.Now - tIn).TotalHours)) * 10000;
-                            int duration = (int)(DateTime.Now - tIn).TotalMinutes;
+                            double fee = Math.Max(1, Math.Ceiling((DateTime.UtcNow - tIn).TotalHours)) * 10000;
+                            int duration = (int)(DateTime.UtcNow - tIn).TotalMinutes;
                             totalRevenue += fee;
                             
                             // 1. ParkingSessions
@@ -291,7 +311,7 @@ namespace SmartParking
                             
                             trans.Commit();
                             
-                            MessageBox.Show($"Xe {p} ra bãi. Phí: {fee:N0} VNĐ");
+                            // Thông báo xe ra đã hiển thị trên log table, không cần MessageBox
                             
                             // Notify Arduino
                             if (serial.IsOpen) serial.WriteLine($"SLOT:{slot - 1},0");
@@ -313,10 +333,21 @@ namespace SmartParking
             {
                 string data = serial.ReadLine().Trim();
                 this.Invoke(new Action(() => {
-                    if (data.StartsWith("SLOTS:")) UpdateSlots(data.Replace("SLOTS:", ""));
-                    else if (data == "ENTRY") XeVao(GenerateRandomLicensePlate());
-                    else if (data == "EXIT") 
+                    if (data.StartsWith("SLOTS:")) 
+                {
+                    // Debounce: reset timer, lưu trạng thái chờ
+                    pendingSlotStatus = data.Replace("SLOTS:", "");
+                    slotUpdateTimer.Stop();
+                    slotUpdateTimer.Start();
+                }
+                    else if (data == "ENTRY")
                     {
+                        AddLog("Cổng vào", "Cảm biến", "", "Phát hiện xe vào");
+                        XeVao(GenerateRandomLicensePlate());
+                    }
+                    else if (data == "EXIT")
+                    {
+                        AddLog("Cổng ra", "Cảm biến", "", "Phát hiện xe ra");
                         using (SqlConnection conn = new SqlConnection(connStr))
                         {
                             conn.Open();
@@ -326,25 +357,46 @@ namespace SmartParking
                             if (result != null) XeRaTheoSlot((int)result);
                         }
                     }
+                    else if (data == "GATE:OPENING") AddLog("Cổng", "Đang mở", "", "Servo hoạt động");
+                    else if (data == "GATE:CLOSED") AddLog("Cổng", "Đã đóng", "", "Servo đóng");
+                    else if (data == "FULL") AddLog("Cổng vào", "Bãi đầy", "", "Không mở cổng");
                 }));
             }
             catch { }
         }
 
-        void UpdateSlots(string status)
+        void ApplySlotUpdate(string status)
         {
             try
             {
                 string[] s = status.Split(',');
+                bool needReload = false;
                 for (int i = 0; i < 5; i++)
                 {
                     // Arduino: 1=trống, 0=có xe
                     bool isEmpty = (s[i] == "1");
                     slotPanels[i].BackColor = isEmpty ? Color.LightGreen : Color.IndianRed;
+                    
                     if (isEmpty && slotLabels[i].Text.Contains("CÓ XE"))
+                    {
+                        // Cảm biến báo trống và label đang hiển thị có xe → reset về trống
                         slotLabels[i].Text = $"S{i+1}\n\nTRỐNG";
+                    }
+                    else if (!isEmpty && !slotLabels[i].Text.Contains("CÓ XE") && !slotLabels[i].Text.Contains("TRỐNG"))
+                    {
+                        // Cảm biến báo có xe NHƯNG label bị lỗi/mất text
+                        needReload = true;
+                    }
+                    else if (!isEmpty && slotLabels[i].Text.Contains("TRỐNG"))
+                    {
+                        // Cảm biến báo có xe nhưng label đang hiển thị TRỐNG → cần reload
+                        needReload = true;
+                    }
                 }
                 UpdateSlotStats();
+                
+                if (needReload)
+                    LoadData();
             }
             catch { }
         }
@@ -415,6 +467,33 @@ namespace SmartParking
         string GenerateRandomLicensePlate()
         {
             return $"{random.Next(10, 99)}{(char)random.Next('A', 'Z' + 1)}-{random.Next(10000, 99999)}";
+        }
+
+        // === GATE CONTROL ===
+        void OpenEntryGate()
+        {
+            if (serial.IsOpen)
+            {
+                serial.Write("GATE:ENTRY\n");
+                AddLog("Cổng vào", "Mở cổng", "", "Đang mở...");
+            }
+            else
+            {
+                AddLog("Cổng vào", "Không kết nối", "", "Chưa kết nối Arduino");
+            }
+        }
+
+        void OpenExitGate()
+        {
+            if (serial.IsOpen)
+            {
+                serial.Write("GATE:EXIT\n");
+                AddLog("Cổng ra", "Mở cổng", "", "Đang mở...");
+            }
+            else
+            {
+                AddLog("Cổng ra", "Không kết nối", "", "Chưa kết nối Arduino");
+            }
         }
     }
 }

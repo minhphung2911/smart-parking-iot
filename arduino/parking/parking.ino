@@ -36,6 +36,11 @@ int emptySlots = 0;
 unsigned long lastEvent = 0;
 int interval = 3000;
 
+// Direction detection
+unsigned long enterBlockedTime = 0;
+unsigned long backBlockedTime = 0;
+const unsigned long DIRECTION_TIMEOUT = 2000; // 2 giây để xác định hướng
+
 // ===== VARIABLES FLAG =====
 bool manualSlotChange = false;  // Flag when there is a manual command
 
@@ -90,6 +95,16 @@ void loop() {
         Serial.println("SLOT:OK");
       }
     }
+    else if (cmd == "GATE:ENTRY" || cmd == "GATE:EXIT") {
+      // Mở cổng (dùng chung 1 cổng cho vào và ra)
+      Serial.println("GATE:OPENING");
+      gate.attach(SERVO_PIN);
+      gate.write(90);  // Mở
+      delay(3000);     // Chờ 3 giây
+      gate.write(0);   // Đóng
+      delay(1000);     // Chờ servo về vị trí 0
+      Serial.println("GATE:CLOSED");
+    }
   }
 
   // ===== READ SLOTS =====
@@ -129,43 +144,74 @@ void loop() {
   lcd.print("S5:");
   lcd.print(slots[4] == HIGH ? "Empty" : "Fill");
 
-  // ===== ENTRY =====
+  // ===== DIRECTION DETECTION =====
   int currentEnter = digitalRead(IR_ENTER);
+  int currentBack = digitalRead(IR_BACK);
+  unsigned long now = millis();
 
+  // Ghi nhận thời điểm IR bị che
   if (lastEnter == HIGH && currentEnter == LOW) {
-    if (emptySlots > 0) {
-      Serial.println("ENTRY");
+    enterBlockedTime = now;
+  }
+  if (lastBack == HIGH && currentBack == LOW) {
+    backBlockedTime = now;
+  }
 
+  // Xe vào: IR_ENTER bị che trước, sau đó IR_BACK bị che trong vòng 2 giây
+  if (enterBlockedTime > 0 && backBlockedTime > 0) {
+    if (enterBlockedTime < backBlockedTime && (backBlockedTime - enterBlockedTime) < DIRECTION_TIMEOUT) {
+      // Xe vào
+      if (emptySlots > 0) {
+        Serial.println("ENTRY");
+        gate.attach(SERVO_PIN);
+        gate.write(90);
+        delay(3000);
+        gate.write(0);
+        delay(1000);
+        Serial.println("GATE:CLOSED");
+      } else {
+        Serial.println("FULL");
+      }
+      // Reset
+      enterBlockedTime = 0;
+      backBlockedTime = 0;
+    }
+    else if (backBlockedTime < enterBlockedTime && (enterBlockedTime - backBlockedTime) < DIRECTION_TIMEOUT) {
+      // Xe ra
+      Serial.println("EXIT");
+      gate.attach(SERVO_PIN);
       gate.write(90);
-      delay(1000);
+      delay(3000);
       gate.write(0);
-    } else {
-      Serial.println("FULL");
+      delay(1000);
+      Serial.println("GATE:CLOSED");
+      // Reset
+      enterBlockedTime = 0;
+      backBlockedTime = 0;
     }
   }
 
-  lastEnter = currentEnter;
-
-  // ===== EXIT =====
-  int currentBack = digitalRead(IR_BACK);
-
-  if (lastBack == HIGH && currentBack == LOW) {
-    Serial.println("EXIT");
-
-    gate.write(90);
-    delay(1000);
-    gate.write(0);
+  // Timeout - reset nếu chỉ có 1 IR bị che mà không có cái thứ 2
+  if (enterBlockedTime > 0 && (now - enterBlockedTime) > DIRECTION_TIMEOUT) {
+    enterBlockedTime = 0;
+  }
+  if (backBlockedTime > 0 && (now - backBlockedTime) > DIRECTION_TIMEOUT) {
+    backBlockedTime = 0;
   }
 
+  lastEnter = currentEnter;
   lastBack = currentBack;
 
   // ===== GỬI SLOT =====
-  Serial.print("SLOTS:");
-  for (int i = 0; i < 5; i++) {
-    Serial.print(slots[i]);
-    if (i < 4) Serial.print(",");
+  // Chỉ gửi nếu không vừa thay đổi manual (cho pin ổn định)
+  if (!manualSlotChange) {
+    Serial.print("SLOTS:");
+    for (int i = 0; i < 5; i++) {
+      Serial.print(slots[i]);
+      if (i < 4) Serial.print(",");
+    }
+    Serial.println();
   }
-  Serial.println();
 
   manualSlotChange = false;
   delay(300);
