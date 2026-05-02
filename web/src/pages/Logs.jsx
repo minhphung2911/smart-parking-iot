@@ -111,7 +111,7 @@ const Logs = () => {
 
   return (
     <DashboardLayout
-      title="System Activity Logs"
+      title="Nhật ký hoạt động hệ thống"
       isSocketConnected={isSocketConnected}
       activeItem="logs"
       onSelectMenu={() => {}} 
@@ -122,10 +122,10 @@ const Logs = () => {
         <Stack spacing={4}>
           <Box>
             <Typography variant="h5" sx={{ mb: 1, fontWeight: 600 }}>
-              Track Every Action in Parking System
+              Theo dõi mọi hoạt động trong hệ thống bãi xe
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Comprehensive audit trail for operations, hardware interactions, and security events.
+              Nhật ký kiểm soát toàn diện cho các vận hành, tương tác phần cứng và sự kiện bảo mật.
             </Typography>
           </Box>
 
@@ -142,7 +142,7 @@ const Logs = () => {
           <LogsStats stats={stats} />
 
           <Box>
-             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>Activity Log Stream</Typography>
+             <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 1 }}>Luồng nhật ký hoạt động</Typography>
              <LogsTable 
                logs={filteredLogs} 
                isLoading={isLoading && systemMode !== "degraded"}
@@ -162,7 +162,7 @@ const Logs = () => {
         {selectedLog && (
           <Stack sx={{ height: '100%' }}>
             <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider' }}>
-              <Typography variant="h6" fontWeight={600}>Audit Detail</Typography>
+              <Typography variant="h6" fontWeight={600}>Chi tiết kiểm soát</Typography>
               <IconButton onClick={() => setSelectedLog(null)} size="small">
                 <CloseIcon />
               </IconButton>
@@ -170,36 +170,36 @@ const Logs = () => {
             <Box sx={{ p: 3, flexGrow: 1 }}>
               <Stack spacing={3}>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>EVENT ID</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>ID SỰ KIỆN</Typography>
                   <Typography variant="body1" fontWeight={700} sx={{ mt: 0.5 }}>#{selectedLog.id}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>TIME</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>THỜI GIAN</Typography>
                   <Typography variant="body1" sx={{ mt: 0.5 }}>{new Date(selectedLog.eventTime).toLocaleString()}</Typography>
                 </Box>
                 <Divider />
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>ACTION TYPE</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>LOẠI HÀNH ĐỘNG</Typography>
                   <Typography variant="body1" fontWeight={600} sx={{ mt: 0.5 }}>{selectedLog.actionType}</Typography>
                 </Box>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>SOURCE/USER</Typography>
-                  <Typography variant="body1" sx={{ mt: 0.5 }}>{selectedLog.username || 'System'}</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>NGUỒN/NGƯỜI DÙNG</Typography>
+                  <Typography variant="body1" sx={{ mt: 0.5 }}>{selectedLog.username || 'Hệ thống'}</Typography>
                 </Box>
                 <Divider />
                 <Box>
-                  <Typography variant="caption" color="text.secondary" fontWeight={600}>AFFECTED SLOT</Typography>
+                  <Typography variant="caption" color="text.secondary" fontWeight={600}>VỊ TRÍ ẢNH HƯỞNG</Typography>
                   <Typography variant="body1" fontWeight={600} sx={{ mt: 0.5 }}>{selectedLog.slotCode || '---'}</Typography>
                 </Box>
                 {selectedLog.plateNumber && (
                   <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>VEHICLE PLATE</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>BIỂN SỐ XE</Typography>
                     <Typography variant="body1" fontWeight={600} sx={{ mt: 0.5 }}>{selectedLog.plateNumber}</Typography>
                   </Box>
                 )}
                 {selectedLog.details && (
                   <Box>
-                    <Typography variant="caption" color="text.secondary" fontWeight={600}>DETAILS / LOG</Typography>
+                    <Typography variant="caption" color="text.secondary" fontWeight={600}>CHI TIẾT / NHẬT KÝ</Typography>
                     <Box sx={{ p: 1.5, mt: 1, bgcolor: 'background.default', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
                       <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                          {selectedLog.details}

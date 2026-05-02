@@ -11,7 +11,7 @@ const LogsToolbar = ({ filterText, setFilterText, actionFilter, setActionFilter,
           {/* Search */}
           <TextField
             size="small"
-            placeholder="Search plate, slot, action..."
+            placeholder="Tìm biển số, vị trí, hành động..."
             value={filterText}
             onChange={(e) => setFilterText(e.target.value)}
             InputProps={{
@@ -31,9 +31,9 @@ const LogsToolbar = ({ filterText, setFilterText, actionFilter, setActionFilter,
               onChange={(e) => setDateRange(e.target.value)}
               displayEmpty
             >
-              <MenuItem value="today">Today</MenuItem>
-              <MenuItem value="7days">Past 7 Days</MenuItem>
-              <MenuItem value="all">All Time</MenuItem>
+              <MenuItem value="today">Hôm nay</MenuItem>
+              <MenuItem value="7days">7 ngày qua</MenuItem>
+              <MenuItem value="all">Tất cả thời gian</MenuItem>
             </Select>
           </FormControl>
 
@@ -44,13 +44,13 @@ const LogsToolbar = ({ filterText, setFilterText, actionFilter, setActionFilter,
               onChange={(e) => setActionFilter(e.target.value)}
               displayEmpty
             >
-              <MenuItem value="All">All Actions</MenuItem>
-              <MenuItem value="Check-in">Check-in</MenuItem>
-              <MenuItem value="Check-out">Check-out</MenuItem>
-              <MenuItem value="Assign">Assign (Manual)</MenuItem>
-              <MenuItem value="Transfer">Transfer</MenuItem>
-              <MenuItem value="Fault">Fault</MenuItem>
-              <MenuItem value="Reserved">Reserved</MenuItem>
+              <MenuItem value="All">Tất cả hành động</MenuItem>
+              <MenuItem value="Check-in">Vào bãi</MenuItem>
+              <MenuItem value="Check-out">Ra bãi</MenuItem>
+              <MenuItem value="Assign">Gán xe (Thủ công)</MenuItem>
+              <MenuItem value="Transfer">Chuyển chỗ</MenuItem>
+              <MenuItem value="Fault">Báo lỗi</MenuItem>
+              <MenuItem value="Reserved">Đặt trước</MenuItem>
             </Select>
           </FormControl>
         </Stack>
@@ -62,7 +62,7 @@ const LogsToolbar = ({ filterText, setFilterText, actionFilter, setActionFilter,
           sx={{ fontWeight: 600, color: 'text.primary', borderColor: 'divider', bgcolor: 'background.paper', '&:hover': { bgcolor: 'rgba(0,0,0,0.02)' } }}
           onClick={onExportCSV}
         >
-          Export CSV
+          Xuất file CSV
         </Button>
       </Stack>
     </Box>

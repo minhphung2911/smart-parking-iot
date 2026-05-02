@@ -19,10 +19,10 @@ const StatBox = ({ label, count, colorHex }) => (
 const LogsStats = ({ stats }) => {
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-      <StatBox label="Today's Check-ins" count={stats.checkins || 0} colorHex="#22c55e" />
-      <StatBox label="Today's Check-outs" count={stats.checkouts || 0} colorHex="#ef4444" />
-      <StatBox label="Manual Actions" count={stats.manual || 0} colorHex="#3b82f6" />
-      <StatBox label="Fault Events" count={stats.faults || 0} colorHex="#3f3f46" />
+      <StatBox label="Lượt vào hôm nay" count={stats.checkins || 0} colorHex="#22c55e" />
+      <StatBox label="Lượt ra hôm nay" count={stats.checkouts || 0} colorHex="#ef4444" />
+      <StatBox label="Thao tác thủ công" count={stats.manual || 0} colorHex="#3b82f6" />
+      <StatBox label="Sự kiện lỗi" count={stats.faults || 0} colorHex="#3f3f46" />
     </Stack>
   );
 };

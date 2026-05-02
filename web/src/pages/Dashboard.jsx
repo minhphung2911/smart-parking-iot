@@ -16,7 +16,7 @@ const Dashboard = () => {
 
   return (
     <DashboardLayout
-      title="Infrastructure Manager"
+      title="Quản lý hạ tầng"
       isSocketConnected={isSocketConnected}
       activeItem="dashboard"
       onSelectMenu={(key) => {}}
@@ -31,28 +31,28 @@ const Dashboard = () => {
                 <Stack direction="row" spacing={2} alignItems="center">
                    <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: connectionState === 'CONNECTED' ? '#00d924' : (connectionState === 'SYNCING' ? '#f5a623' : '#ff0000'), animation: connectionState === 'SYNCING' ? 'pulse 1.5s infinite' : 'none' }} />
                    <Typography variant="subtitle2" sx={{ fontWeight: 700, letterSpacing: '0.05em' }}>
-                      SYSTEM {connectionState}
+                      HỆ THỐNG {connectionState === 'CONNECTED' ? 'ĐÃ KẾT NỐI' : connectionState === 'SYNCING' ? 'ĐANG ĐỒNG BỘ' : 'MẤT KẾT NỐI'}
                    </Typography>
                 </Stack>
                 
                 <Stack direction="row" spacing={3} sx={{ color: 'text.secondary' }}>
                    <Box>
-                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: 'text.muted' }}>LAST HEARTBEAT</Typography>
+                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: 'text.muted' }}>NHỊP TIM CUỐI</Typography>
                       <Typography variant="body2">{lastHeartbeat ? lastHeartbeat.toLocaleTimeString() : '---'}</Typography>
                    </Box>
                    <Box>
-                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: 'text.muted' }}>RECONNECT ATTEMPTS</Typography>
+                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: 'text.muted' }}>SỐ LẦN THỬ LẠI</Typography>
                       <Typography variant="body2">{reconnectAttempts}</Typography>
                    </Box>
                    <Box>
-                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: 'text.muted' }}>API STATUS</Typography>
-                      <Typography variant="body2" sx={{ color: apiStatus === 'online' ? 'success.main' : 'error.main', fontWeight: 600 }}>{apiStatus.toUpperCase()}</Typography>
+                      <Typography variant="caption" display="block" sx={{ fontWeight: 600, color: 'text.muted' }}>TRẠNG THÁI API</Typography>
+                      <Typography variant="body2" sx={{ color: apiStatus === 'online' ? 'success.main' : 'error.main', fontWeight: 600 }}>{apiStatus === 'online' ? 'TRỰC TUYẾN' : 'NGOẠI TUYẾN'}</Typography>
                    </Box>
                 </Stack>
              </Stack>
              {connectionState === 'DISCONNECTED' && (
                <Alert severity="error" sx={{ mt: 2, border: 'none', bgcolor: 'transparent', p: 0 }}>
-                 Real-time infrastructure link severed. Data displayed is cached from last successful sync.
+                 Kết nối hạ tầng thời gian thực bị gián đoạn. Dữ liệu hiển thị được lấy từ lần đồng bộ thành công cuối cùng.
                </Alert>
              )}
           </Box>
@@ -60,10 +60,10 @@ const Dashboard = () => {
           {/* Header section */}
           <Box>
             <Typography variant="h5" sx={{ mb: 1, letterSpacing: '-0.02em', fontWeight: 600 }}>
-              Infrastructure Overview
+              Tổng quan hạ tầng
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Real-time monitoring and throughput analysis for your parking assets.
+              Giám sát thời gian thực và phân tích lưu lượng cho bãi đỗ xe của bạn.
             </Typography>
           </Box>
 
@@ -78,7 +78,7 @@ const Dashboard = () => {
           <Grid container spacing={6}>
             <Grid item xs={12} lg={7}>
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-                Live System Status
+                Trạng thái hệ thống trực tiếp
               </Typography>
               <SlotGrid 
                 isSocketConnected={isSocketConnected} 
@@ -88,7 +88,7 @@ const Dashboard = () => {
             </Grid>
             <Grid item xs={12} lg={5}>
               <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600 }}>
-                Activity Feed
+                Luồng hoạt động
               </Typography>
               <ParkingTable 
                 isSocketConnected={isSocketConnected} 

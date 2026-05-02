@@ -11,10 +11,10 @@ const OverviewPage = () => {
         {/* Header */}
         <Box>
           <Typography variant="h3" sx={{ mb: 1 }}>
-            Infrastructure Overview
+            Tổng quan hạ tầng
           </Typography>
           <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-            Real-time operational status and throughput monitoring for parking assets.
+            Trạng thái vận hành thời gian thực và giám sát lưu lượng cho các tài sản bãi xe.
           </Typography>
         </Box>
 

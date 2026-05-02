@@ -27,7 +27,7 @@ const LogsTable = ({ logs, isLoading, onRowClick }) => {
   if (logs.length === 0) {
     return (
       <Box sx={{ py: 8, textAlign: 'center', border: '1px solid', borderColor: 'divider', borderRadius: 1, mt: 2, bgcolor: 'background.paper' }}>
-        <Typography variant="body1" color="text.secondary">No activity logs found for the selected criteria.</Typography>
+        <Typography variant="body1" color="text.secondary">Không tìm thấy nhật ký hoạt động nào cho các tiêu chí đã chọn.</Typography>
       </Box>
     );
   }
@@ -37,12 +37,12 @@ const LogsTable = ({ logs, isLoading, onRowClick }) => {
       <Table size="medium">
         <TableHead sx={{ bgcolor: '#fafafa' }}>
           <TableRow>
-            <TableCell sx={{ fontWeight: 600, color: 'text.secondary', width: 140 }}>TIME</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: 'text.secondary', width: 140 }}>ACTION</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>PLATE</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>SLOT</TableCell>
-            <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>USER/SOURCE</TableCell>
-            <TableCell align="right" sx={{ fontWeight: 600, color: 'text.secondary' }}>STATUS</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: 'text.secondary', width: 140 }}>THỜI GIAN</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: 'text.secondary', width: 140 }}>HÀNH ĐỘNG</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>BIỂN SỐ</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>VỊ TRÍ</TableCell>
+            <TableCell sx={{ fontWeight: 600, color: 'text.secondary' }}>NGƯỜI DÙNG/NGUỒN</TableCell>
+            <TableCell align="right" sx={{ fontWeight: 600, color: 'text.secondary' }}>TRẠNG THÁI</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -76,10 +76,10 @@ const LogsTable = ({ logs, isLoading, onRowClick }) => {
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>{log.plateNumber || "---"}</TableCell>
                 <TableCell sx={{ color: 'text.primary', fontWeight: 500 }}>{log.slotCode || "---"}</TableCell>
-                <TableCell sx={{ color: 'text.secondary' }}>{log.username || "System"}</TableCell>
+                <TableCell sx={{ color: 'text.secondary' }}>{log.username === "System" ? "Hệ thống" : (log.username || "Hệ thống")}</TableCell>
                 <TableCell align="right">
                    <Typography variant="body2" sx={{ color: log.status === 'Success' ? 'success.main' : 'error.main', fontWeight: 600 }}>
-                     {log.status || 'Success'}
+                     {log.status === 'Success' ? 'Thành công' : (log.status || 'Thành công')}
                    </Typography>
                 </TableCell>
               </TableRow>
