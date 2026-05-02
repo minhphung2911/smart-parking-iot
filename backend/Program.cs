@@ -43,11 +43,11 @@ using (var scope = app.Services.CreateScope())
         db.ParkingSlots.RemoveRange(currentSlots);
         db.ParkingSlots.AddRange(new List<ParkingSlot>
         {
-            new ParkingSlot { SlotCode = "A1", Zone = "A", Status = "Available" },
-            new ParkingSlot { SlotCode = "A2", Zone = "A", Status = "Available" },
-            new ParkingSlot { SlotCode = "A3", Zone = "A", Status = "Available" },
-            new ParkingSlot { SlotCode = "B1", Zone = "B", Status = "Available" },
-            new ParkingSlot { SlotCode = "B2", Zone = "B", Status = "Available" }
+            new ParkingSlot { SlotID = 1, SlotCode = "S1", Zone = "A", Status = "Available", FloorNo = 1, DistanceFromGate = 1 },
+            new ParkingSlot { SlotID = 2, SlotCode = "S2", Zone = "A", Status = "Available", FloorNo = 1, DistanceFromGate = 2 },
+            new ParkingSlot { SlotID = 3, SlotCode = "S3", Zone = "A", Status = "Available", FloorNo = 1, DistanceFromGate = 3 },
+            new ParkingSlot { SlotID = 4, SlotCode = "S4", Zone = "A", Status = "Available", FloorNo = 1, DistanceFromGate = 4 },
+            new ParkingSlot { SlotID = 5, SlotCode = "S5", Zone = "A", Status = "Available", FloorNo = 1, DistanceFromGate = 5 }
         });
         
         db.SaveChanges();

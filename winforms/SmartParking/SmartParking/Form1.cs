@@ -1,8 +1,7 @@
-﻿using System;
-using System.Data;
-using System.Data.SqlClient;
+using System;
 using System.Drawing;
 using System.IO.Ports;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace SmartParking
@@ -11,8 +10,7 @@ namespace SmartParking
     {
         // --- CẤU HÌNH HỆ THỐNG ---
         SerialPort serial = new SerialPort("COM3", 9600);
-        string connStr = @"Server=localhost,1433;Database=SmartParkingDB;User Id=sa;Password=YourPassword123!;TrustServerCertificate=True";
-        
+        private ApiClient _api = new ApiClient();
         double totalRevenue = 0;
         private static readonly Random random = new Random();
 
@@ -79,19 +77,17 @@ namespace SmartParking
 
         private void btnExit_Click(object sender, EventArgs e)
         {
-            using (SqlConnection conn = new SqlConnection(connStr))
+            // Tìm slot đầu tiên có xe (theo UI) thay vì SQL
+            for (int i = 0; i < 5; i++)
             {
-                conn.Open();
-                string q = "SELECT TOP 1 SlotNumber FROM ParkingLog WHERE TimeOut IS NULL ORDER BY TimeIn ASC";
-                SqlCommand cmd = new SqlCommand(q, conn);
-                object result = cmd.ExecuteScalar();
-                if (result != null)
+                if (slotPanels[i].BackColor == Color.IndianRed)
                 {
                     OpenExitGate();
-                    XeRaTheoSlot((int)result);
+                    XeRaTheoSlot(i + 1);
+                    return;
                 }
-                else MessageBox.Show("Không còn xe nào trong bãi!");
             }
+            MessageBox.Show("Không còn xe nào trong bãi!");
         }
 
         private void btnAutoEntry_Click(object sender, EventArgs e)
@@ -105,20 +101,18 @@ namespace SmartParking
 
         private void btnAutoExit_Click(object sender, EventArgs e)
         {
-            using (SqlConnection conn = new SqlConnection(connStr))
+            // Tìm slot đầu tiên có xe (theo UI) thay vì SQL
+            for (int i = 0; i < 5; i++)
             {
-                conn.Open();
-                string q = "SELECT TOP 1 SlotNumber FROM ParkingLog WHERE TimeOut IS NULL ORDER BY TimeIn ASC";
-                SqlCommand cmd = new SqlCommand(q, conn);
-                object result = cmd.ExecuteScalar();
-                if (result != null)
+                if (slotPanels[i].BackColor == Color.IndianRed)
                 {
                     // Mở cổng ra trước khi xe ra
                     OpenExitGate();
-                    XeRaTheoSlot((int)result);
+                    XeRaTheoSlot(i + 1);
+                    return;
                 }
-                else MessageBox.Show("Không có xe để ra!");
             }
+            MessageBox.Show("Không có xe để ra!");
         }
 
         private void btnConnect_Click(object sender, EventArgs e)
@@ -164,9 +158,16 @@ namespace SmartParking
             }
         }
 
-        // --- DATABASE ---
+        // --- API METHODS ---
         void XeVao(string plate, int manualSlot = -1)
         {
+            // Chuyển sang gọi API
+            XeVaoApi(plate, manualSlot);
+        }
+
+        async void XeVaoApi(string plate, int manualSlot = -1)
+        {
+            // Tìm slot trống nếu không chỉ định
             int slotToAssign = manualSlot;
             if (slotToAssign == -1)
             {
@@ -177,153 +178,181 @@ namespace SmartParking
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                string slotCode = $"S{slotToAssign}";
+                string result = await _api.ParkingEntryAsync(plate, "Car", slotCode);
+
+                if (result.Contains("error"))
                 {
-                    conn.Open();
-                    SqlTransaction trans = conn.BeginTransaction();
-                    try
-                    {
-                        // 1. Vehicles
-                        string checkV = "SELECT VehicleID FROM Vehicles WHERE PlateNumber=@p";
-                        SqlCommand cmdV = new SqlCommand(checkV, conn, trans);
-                        cmdV.Parameters.AddWithValue("@p", plate);
-                        object vId = cmdV.ExecuteScalar();
-                        if (vId == null)
-                        {
-                            string insertV = "INSERT INTO Vehicles (PlateNumber, VehicleType, IsVIP) VALUES (@p, 'Car', 0); SELECT SCOPE_IDENTITY();";
-                            SqlCommand cmdIV = new SqlCommand(insertV, conn, trans);
-                            cmdIV.Parameters.AddWithValue("@p", plate);
-                            vId = cmdIV.ExecuteScalar();
-                        }
-                        int vehicleId = Convert.ToInt32(vId);
-                        
-                        // 2. ParkingSessions
-                        string insertS = "INSERT INTO ParkingSessions (VehicleID, SlotID, CheckInTime, Status) VALUES (@v, @s, @now, 'Active')";
-                        SqlCommand cmdS = new SqlCommand(insertS, conn, trans);
-                        cmdS.Parameters.AddWithValue("@v", vehicleId);
-                        cmdS.Parameters.AddWithValue("@s", slotToAssign);
-                        cmdS.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                        cmdS.ExecuteNonQuery();
-                        
-                        // 3. ParkingSlots
-                        string updateSlot = "UPDATE ParkingSlots SET Status='Occupied', LastUpdated=@now WHERE SlotID=@s";
-                        SqlCommand cmdSlot = new SqlCommand(updateSlot, conn, trans);
-                        cmdSlot.Parameters.AddWithValue("@s", slotToAssign);
-                        cmdSlot.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                        cmdSlot.ExecuteNonQuery();
-                        
-                        // 4. Logs
-                        string insertLog = "INSERT INTO Logs (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details) VALUES (@now, 'Check-in', @p, @sc, 'WinForms', 'Success', 'Xe vao')";
-                        SqlCommand cmdLog = new SqlCommand(insertLog, conn, trans);
-                        cmdLog.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                        cmdLog.Parameters.AddWithValue("@p", plate);
-                        cmdLog.Parameters.AddWithValue("@sc", "S" + slotToAssign);
-                        cmdLog.ExecuteNonQuery();
-                        
-                        // 5. Legacy
-                        string q = "INSERT INTO ParkingLog (Plate, TimeIn, SlotNumber) VALUES (@p, @now, @s)";
-                        SqlCommand cmd = new SqlCommand(q, conn, trans);
-                        cmd.Parameters.AddWithValue("@p", plate);
-                        cmd.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                        cmd.Parameters.AddWithValue("@s", slotToAssign);
-                        cmd.ExecuteNonQuery();
-                        
-                        trans.Commit();
-                    }
-                    catch { trans.Rollback(); throw; }
+                    MessageBox.Show("Lỗi API: " + result);
+                    return;
                 }
-                
+
                 // Update UI
                 slotPanels[slotToAssign - 1].BackColor = Color.IndianRed;
                 slotLabels[slotToAssign - 1].Text = $"S{slotToAssign}\n{plate}\nCÓ XE";
                 AddLog("Xe vào", plate, $"S{slotToAssign}", "Thành công");
-                LoadData();
+
+                await LoadDataFromApi();
                 UpdateSlotStats();
-                
-                // Notify Arduino
+
                 if (serial.IsOpen) serial.WriteLine($"SLOT:{slotToAssign - 1},1");
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi SQL: " + ex.Message); }
+            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
         }
 
         void XeRaTheoSlot(int slot)
         {
+            // Chuyển sang gọi API
+            XeRaTheoSlotApi(slot);
+        }
+
+        async void XeRaTheoSlotApi(int slot)
+        {
             try
             {
-                using (SqlConnection conn = new SqlConnection(connStr))
+                string plate = GetPlateFromSlot(slot);
+                if (string.IsNullOrEmpty(plate))
                 {
-                    conn.Open();
-                    SqlTransaction trans = conn.BeginTransaction();
-                    try
-                    {
-                        string g = "SELECT TOP 1 Id, TimeIn, Plate FROM ParkingLog WHERE SlotNumber=@s AND TimeOut IS NULL";
-                        SqlCommand cmd = new SqlCommand(g, conn, trans);
-                        cmd.Parameters.AddWithValue("@s", slot);
-                        SqlDataReader r = cmd.ExecuteReader();
-                        if (r.Read())
-                        {
-                            int id = r.GetInt32(0);
-                            DateTime tIn = r.GetDateTime(1);
-                            string p = r.GetString(2);
-                            r.Close();
-
-                            double fee = Math.Max(1, Math.Ceiling((DateTime.UtcNow - tIn).TotalHours)) * 10000;
-                            int duration = (int)(DateTime.UtcNow - tIn).TotalMinutes;
-                            totalRevenue += fee;
-                            
-                            // 1. ParkingSessions
-                            string updateS = "UPDATE ParkingSessions SET CheckOutTime=@now, DurationMinutes=@d, Fee=@f, Status='Closed' WHERE SlotID=@s AND Status='Active'";
-                            SqlCommand cmdS = new SqlCommand(updateS, conn, trans);
-                            cmdS.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                            cmdS.Parameters.AddWithValue("@d", duration);
-                            cmdS.Parameters.AddWithValue("@f", fee);
-                            cmdS.Parameters.AddWithValue("@s", slot);
-                            cmdS.ExecuteNonQuery();
-                            
-                            // 2. ParkingSlots
-                            string updateSlot = "UPDATE ParkingSlots SET Status='Available', LastUpdated=@now WHERE SlotID=@s";
-                            SqlCommand cmdSlot = new SqlCommand(updateSlot, conn, trans);
-                            cmdSlot.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                            cmdSlot.Parameters.AddWithValue("@s", slot);
-                            cmdSlot.ExecuteNonQuery();
-                            
-                            // 3. Logs
-                            string insertLog = "INSERT INTO Logs (EventTime, ActionType, PlateNumber, SlotCode, Source, Status, Details) VALUES (@now, 'Check-out', @p, @sc, 'WinForms', 'Success', @detail)";
-                            SqlCommand cmdLog = new SqlCommand(insertLog, conn, trans);
-                            cmdLog.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                            cmdLog.Parameters.AddWithValue("@p", p);
-                            cmdLog.Parameters.AddWithValue("@sc", "S" + slot);
-                            cmdLog.Parameters.AddWithValue("@detail", $"Phi: {fee:N0} VND");
-                            cmdLog.ExecuteNonQuery();
-                            
-                            // 4. Legacy
-                            string u = "UPDATE ParkingLog SET TimeOut=@now, Fee=@f WHERE Id=@id";
-                            SqlCommand uc = new SqlCommand(u, conn, trans);
-                            uc.Parameters.AddWithValue("@now", DateTime.UtcNow);
-                            uc.Parameters.AddWithValue("@f", fee);
-                            uc.Parameters.AddWithValue("@id", id);
-                            uc.ExecuteNonQuery();
-                            
-                            // Update UI
-                            slotPanels[slot - 1].BackColor = Color.LightGreen;
-                            slotLabels[slot - 1].Text = $"S{slot}\n\nTRỐNG";
-                            AddLog("Xe ra", p, $"S{slot}", $"Phi: {fee:N0} VND");
-                            
-                            trans.Commit();
-                            
-                            // Thông báo xe ra đã hiển thị trên log table, không cần MessageBox
-                            
-                            // Notify Arduino
-                            if (serial.IsOpen) serial.WriteLine($"SLOT:{slot - 1},0");
-                        }
-                        else r.Close();
-                    }
-                    catch { trans.Rollback(); throw; }
+                    MessageBox.Show("Không tìm thấy xe ở slot này!");
+                    return;
                 }
-                LoadData();
+
+                string result = await _api.ParkingExitAsync(plate);
+
+                if (result.Contains("error"))
+                {
+                    MessageBox.Show("Lỗi API: " + result);
+                    return;
+                }
+
+                string duration = ExtractJsonValue(result, "duration");
+                int fee = 0;
+                int.TryParse(ExtractJsonValue(result, "fee"), out fee);
+                totalRevenue += fee;
+
+                slotPanels[slot - 1].BackColor = Color.LightGreen;
+                slotLabels[slot - 1].Text = $"S{slot}\n\nTRỐNG";
+                AddLog("Xe ra", plate, $"S{slot}", $"Phí: {fee:N0} VND");
+
+                await LoadDataFromApi();
+                UpdateSlotStats();
+
+                if (serial.IsOpen) serial.WriteLine($"SLOT:{slot - 1},0");
+            }
+            catch (Exception ex) { MessageBox.Show("Lỗi: " + ex.Message); }
+        }
+
+        async void ForwardSlotStatusToApi(string status)
+        {
+            try
+            {
+                string[] parts = status.Split(',');
+                if (parts.Length != 5) return;
+
+                int[] slotStatuses = new int[5];
+                for (int i = 0; i < 5; i++)
+                {
+                    slotStatuses[i] = parts[i] == "1" ? 1 : 0;
+                }
+
+                string result = await _api.SendSensorUpdateAsync(slotStatuses);
+                if (result.Contains("error"))
+                {
+                    AddLog("API", "Lỗi forward slot", "", result);
+                }
+            }
+            catch { }
+        }
+
+        async void ForwardEntryDetectedToApi()
+        {
+            try { await _api.SendEntryDetectedAsync(); } catch { }
+        }
+
+        async void ForwardExitDetectedToApi()
+        {
+            try { await _api.SendExitDetectedAsync(); } catch { }
+        }
+
+        async Task LoadDataFromApi()
+        {
+            try
+            {
+                string result = await _api.GetSlotsAsync();
+                if (result.Contains("error")) return;
+
+                // Parse JSON array: [{"slotID":1,"slotCode":"S1","status":"Available","plateNumber":"51A-12345",...},...]
+                string[] items = result.Split(new[] { "},{" }, StringSplitOptions.None);
+                foreach (string item in items)
+                {
+                    string slotCode    = ExtractJsonValue(item, "slotCode");
+                    string status      = ExtractJsonValue(item, "status");
+                    string plateNumber = ExtractJsonValue(item, "plateNumber");
+
+                    if (slotCode.Length >= 2 && int.TryParse(slotCode.Substring(1), out int slotNum))
+                    {
+                        int index = slotNum - 1;
+                        if (index >= 0 && index < 5)
+                        {
+                            if (status == "Occupied")
+                            {
+                                slotPanels[index].BackColor = Color.IndianRed;
+                                string plate = ExtractJsonValue(item, "plateNumber");
+                                if (!string.IsNullOrEmpty(plate))
+                                    slotLabels[index].Text = $"S{slotNum}\n{plate}\nCÓ XE";
+                                else
+                                    slotLabels[index].Text = $"S{slotNum}\nCÓ XE";
+                            }
+                            else
+                            {
+                                slotPanels[index].BackColor = Color.LightGreen;
+                                slotLabels[index].Text = $"S{slotNum}\n\nTRỐNG";
+                            }
+                        }
+                    }
+                }
                 UpdateSlotStats();
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi SQL: " + ex.Message); }
+            catch { }
+        }
+
+        // Simple JSON value extractor - không cần thư viện
+        string ExtractJsonValue(string json, string key)
+        {
+            string search = "\"" + key + "\":";
+            int start = json.IndexOf(search);
+            if (start < 0) return "";
+            start += search.Length;
+
+            // Skip whitespace
+            while (start < json.Length && json[start] == ' ') start++;
+            if (start >= json.Length) return "";
+
+            if (json[start] == '"')
+            {
+                // String value
+                start++;
+                int end = json.IndexOf('"', start);
+                if (end < 0) return "";
+                return json.Substring(start, end - start);
+            }
+            else
+            {
+                // Number or boolean value
+                int end = start;
+                while (end < json.Length && json[end] != ',' && json[end] != '}' && json[end] != ']')
+                    end++;
+                return json.Substring(start, end - start).Trim();
+            }
+        }
+
+        string GetPlateFromSlot(int slot)
+        {
+            string text = slotLabels[slot - 1].Text;
+            string[] lines = text.Split('\n');
+            if (lines.Length >= 2 && !lines[1].Contains("TRỐNG") && !string.IsNullOrWhiteSpace(lines[1]))
+                return lines[1];
+            return "";
         }
 
         // --- ARDUINO ---
@@ -343,18 +372,21 @@ namespace SmartParking
                     else if (data == "ENTRY")
                     {
                         AddLog("Cổng vào", "Cảm biến", "", "Phát hiện xe vào");
+                        ForwardEntryDetectedToApi(); // Forward lên API
                         XeVao(GenerateRandomLicensePlate());
                     }
                     else if (data == "EXIT")
                     {
                         AddLog("Cổng ra", "Cảm biến", "", "Phát hiện xe ra");
-                        using (SqlConnection conn = new SqlConnection(connStr))
+                        ForwardExitDetectedToApi(); // Forward lên API
+                        // Tìm slot đầu tiên có xe (theo UI) thay vì SQL
+                        for (int i = 0; i < 5; i++)
                         {
-                            conn.Open();
-                            string q = "SELECT TOP 1 SlotNumber FROM ParkingLog WHERE TimeOut IS NULL ORDER BY TimeIn ASC";
-                            SqlCommand cmd = new SqlCommand(q, conn);
-                            object result = cmd.ExecuteScalar();
-                            if (result != null) XeRaTheoSlot((int)result);
+                            if (slotPanels[i].BackColor == Color.IndianRed)
+                            {
+                                XeRaTheoSlot(i + 1);
+                                break;
+                            }
                         }
                     }
                     else if (data == "GATE:OPENING") AddLog("Cổng", "Đang mở", "", "Servo hoạt động");
@@ -395,8 +427,11 @@ namespace SmartParking
                 }
                 UpdateSlotStats();
                 
+                // Forward lên API
+                ForwardSlotStatusToApi(status);
+                
                 if (needReload)
-                    LoadData();
+                    LoadDataFromApi(); // Dùng API thay vì SQL
             }
             catch { }
         }
@@ -434,34 +469,8 @@ namespace SmartParking
 
         void LoadData()
         {
-            try
-            {
-                using (SqlConnection conn = new SqlConnection(connStr))
-                {
-                    conn.Open();
-                    // Load current from ParkingSessions
-                    SqlDataAdapter da = new SqlDataAdapter(@"
-                        SELECT v.PlateNumber, ps.CheckInTime, ps.SlotID as SlotNumber 
-                        FROM ParkingSessions ps 
-                        JOIN Vehicles v ON ps.VehicleID = v.VehicleID 
-                        WHERE ps.Status='Active'", conn);
-                    DataTable dt = new DataTable();
-                    da.Fill(dt);
-                    
-                    // Update slot displays
-                    foreach (DataRow row in dt.Rows)
-                    {
-                        int slot = Convert.ToInt32(row["SlotNumber"]) - 1;
-                        if (slot >= 0 && slot < 5)
-                        {
-                            slotPanels[slot].BackColor = Color.IndianRed;
-                            slotLabels[slot].Text = $"S{slot+1}\n{row["PlateNumber"]}\nCÓ XE";
-                        }
-                    }
-                    UpdateSlotStats();
-                }
-            }
-            catch { }
+            // Chuyển sang gọi API (async fire-and-forget)
+            _ = LoadDataFromApi();
         }
 
         string GenerateRandomLicensePlate()

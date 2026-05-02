@@ -70,16 +70,6 @@ CREATE TABLE Logs (
 );
 GO
 
-<<<<<<< HEAD
--- Table for WinForms Legacy Compatibility
-CREATE TABLE ParkingLog (
-    Id INT IDENTITY PRIMARY KEY,
-    Plate NVARCHAR(20),
-    TimeIn DATETIME,
-    TimeOut DATETIME,
-    SlotNumber INT,
-    Fee DECIMAL(18,2)
-=======
 /* =========================================================
    WINFORMS COMPATIBILITY TABLE
    Legacy ParkingLog table for WinForms desktop app
@@ -92,7 +82,6 @@ CREATE TABLE ParkingLog (
     TimeOut DATETIME NULL,
     SlotNumber INT NOT NULL,
     Fee DECIMAL(18,2) DEFAULT 0
->>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
 );
 GO
 
@@ -112,23 +101,12 @@ GO
 
 
 /* =========================================================
-<<<<<<< HEAD
    2. INSERT PARKING SLOTS (5 slots ONLY)
-=======
-   2. INSERT PARKING SLOTS (5 slots for WinForms)
->>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
 ========================================================= */
 
 INSERT INTO ParkingSlots (SlotID, SlotCode, Zone, FloorNo, DistanceFromGate, Status)
 VALUES
-<<<<<<< HEAD
-('A1','A',1,1,'Available'),
-('A2','A',1,2,'Available'),
-('A3','A',1,3,'Available'),
-('B1','B',1,4,'Available'),
-('B2','B',1,5,'Available');
-GO
-=======
+
 (1,'S1','A',1,1,'Available'),
 (2,'S2','A',1,2,'Available'),
 (3,'S3','A',1,3,'Available'),
@@ -159,7 +137,6 @@ GO
    6. SYSTEM FAULTS - No seed data
 ========================================================= */
 -- Empty
->>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
 
 
 /* =========================================================

@@ -19,7 +19,33 @@ public class SlotsController : ControllerBase
     [HttpGet]
     public IActionResult Get()
     {
-        return Ok(_db.ParkingSlots.ToList());
+        var slots = _db.ParkingSlots
+            .GroupJoin(
+                _db.ParkingSessions.Where(s => s.Status == "Active"),
+                slot => slot.SlotID,
+                session => session.SlotID,
+                (slot, sessions) => new { slot, sessions })
+            .SelectMany(
+                x => x.sessions.DefaultIfEmpty(),
+                (x, session) => new { x.slot, session })
+            .GroupJoin(
+                _db.Vehicles,
+                x => x.session.VehicleID,
+                vehicle => vehicle.VehicleID,
+                (x, vehicles) => new { x.slot, x.session, vehicles })
+            .SelectMany(
+                x => x.vehicles.DefaultIfEmpty(),
+                (x, vehicle) => new
+                {
+                    x.slot.SlotID,
+                    x.slot.SlotCode,
+                    x.slot.Status,
+                    PlateNumber = vehicle != null ? vehicle.PlateNumber : null,
+                    VehicleType = vehicle != null ? vehicle.VehicleType : null
+                })
+            .ToList();
+            
+        return Ok(slots);
     }
 
     [HttpPut("{id}/status")]
@@ -40,10 +66,13 @@ public class SlotsController : ControllerBase
         slot.Status = newStatus;
 
         // Log the manual change
-        _db.Logs.Add(new Log { 
-            EventTime = DateTime.UtcNow, 
-            ActionType = $"Manual Update: {newStatus}", 
+        _db.Logs.Add(new Log
+        {
+            EventTime = DateTime.UtcNow,
+            ActionType = $"Manual Update: {newStatus}",
             SlotCode = slot.SlotCode,
+            Source = "Admin",
+            Status = "Success",
             Details = $"Thay đổi từ {oldStatus}"
         });
 

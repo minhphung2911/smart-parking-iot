@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SmartParking.Api.Data;
 
 namespace SmartParking.Api.Controllers;
@@ -15,14 +16,17 @@ public class AnalyticsController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult Get()
+    public async Task<IActionResult> Get()
     {
-        var sessions = _db.ParkingSessions.ToList();
+        var sessions = await _db.ParkingSessions
+            .Include(s => s.Vehicle)
+            .ToListAsync();
+
         var totalRevenue = sessions.Sum(x => x.Fee);
         var totalSessions = sessions.Count();
 
-        var bikeCount = sessions.Count(s => s.VehicleType == "Bike");
-        var carCount = sessions.Count(s => s.VehicleType == "Car");
+        var bikeCount = sessions.Count(s => s.Vehicle?.VehicleType == "Bike");
+        var carCount = sessions.Count(s => s.Vehicle?.VehicleType == "Car");
 
         // Last 7 days trend
         var trend = Enumerable.Range(0, 7)

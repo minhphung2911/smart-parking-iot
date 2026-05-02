@@ -23,24 +23,39 @@ public class ParkingController : ControllerBase
         if (slot == null) return NotFound("Slot not found");
         if (slot.Status == "Occupied") return BadRequest("Slot already occupied");
 
+        // Find or create vehicle
+        var vehicle = await _db.Vehicles.FirstOrDefaultAsync(v => v.PlateNumber == request.PlateNumber);
+        if (vehicle == null)
+        {
+            vehicle = new Vehicle
+            {
+                PlateNumber = request.PlateNumber,
+                VehicleType = request.VehicleType ?? "Car"
+            };
+            _db.Vehicles.Add(vehicle);
+            await _db.SaveChangesAsync();
+        }
+
         var session = new ParkingSession
         {
-            PlateNumber = request.PlateNumber,
-            VehicleType = request.VehicleType,
+            VehicleID = vehicle.VehicleID,
             SlotID = slot.SlotID,
             CheckInTime = DateTime.UtcNow,
-            Status = "Parking",
+            Status = "Active",
             Fee = 0
         };
 
         slot.Status = "Occupied";
         _db.ParkingSessions.Add(session);
-        
-        _db.Logs.Add(new Log { 
-            EventTime = DateTime.UtcNow, 
-            ActionType = "Check-in", 
-            PlateNumber = request.PlateNumber, 
+
+        _db.Logs.Add(new Log
+        {
+            EventTime = DateTime.UtcNow,
+            ActionType = "Check-in",
+            PlateNumber = request.PlateNumber,
             SlotCode = slot.SlotCode,
+            Source = "API",
+            Status = "Success",
             Details = $"Loại xe: {request.VehicleType}"
         });
 
@@ -51,8 +66,12 @@ public class ParkingController : ControllerBase
     [HttpPost("exit")]
     public async Task<IActionResult> Exit([FromBody] ExitRequest request)
     {
+        // Find vehicle first
+        var vehicle = await _db.Vehicles.FirstOrDefaultAsync(v => v.PlateNumber == request.PlateNumber);
+        if (vehicle == null) return NotFound("Vehicle not found");
+
         var session = await _db.ParkingSessions
-            .Where(s => s.PlateNumber == request.PlateNumber && s.Status == "Parking")
+            .Where(s => s.VehicleID == vehicle.VehicleID && s.Status == "Active")
             .OrderByDescending(s => s.CheckInTime)
             .FirstOrDefaultAsync();
 
@@ -61,33 +80,27 @@ public class ParkingController : ControllerBase
         var slot = await _db.ParkingSlots.FindAsync(session.SlotID);
         var checkOutTime = DateTime.UtcNow;
         var duration = checkOutTime - session.CheckInTime;
-        
-        // Fee calculation
+
+        // Fee calculation - Fixed rate: 20,000 VNĐ/giờ
         decimal fee = 0;
         double totalHours = Math.Max(1, Math.Ceiling(duration.TotalHours));
-
-        if (session.VehicleType.Equals("Bike", StringComparison.OrdinalIgnoreCase))
-        {
-            // Bike: 5k for first hour, +3k for each subsequent hour
-            fee = 5000 + (decimal)(totalHours - 1) * 3000;
-        }
-        else
-        {
-            // Car: 20k per hour
-            fee = (decimal)totalHours * 20000;
-        }
+        fee = (decimal)totalHours * 20000;
 
         session.CheckOutTime = checkOutTime;
+        session.DurationMinutes = (int)duration.TotalMinutes;
         session.Fee = fee;
-        session.Status = "Completed";
+        session.Status = "Closed";
 
         if (slot != null) slot.Status = "Available";
 
-        _db.Logs.Add(new Log { 
-            EventTime = DateTime.UtcNow, 
-            ActionType = "Check-out", 
-            PlateNumber = session.PlateNumber, 
+        _db.Logs.Add(new Log
+        {
+            EventTime = DateTime.UtcNow,
+            ActionType = "Check-out",
+            PlateNumber = request.PlateNumber,
             SlotCode = slot?.SlotCode,
+            Source = "API",
+            Status = "Success",
             Details = $"Thời gian: {duration.Hours}h{duration.Minutes}m, Phí: {fee:N0}đ"
         });
 

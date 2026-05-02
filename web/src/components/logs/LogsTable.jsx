@@ -76,7 +76,7 @@ const LogsTable = ({ logs, isLoading, onRowClick }) => {
                 </TableCell>
                 <TableCell sx={{ fontWeight: 600 }}>{log.plateNumber || "---"}</TableCell>
                 <TableCell sx={{ color: 'text.primary', fontWeight: 500 }}>{log.slotCode || "---"}</TableCell>
-                <TableCell sx={{ color: 'text.secondary' }}>{log.username === "System" ? "Hệ thống" : (log.username || "Hệ thống")}</TableCell>
+                <TableCell sx={{ color: 'text.secondary' }}>{log.source === "System" ? "Hệ thống" : (log.source || "Hệ thống")}</TableCell>
                 <TableCell align="right">
                    <Typography variant="body2" sx={{ color: log.status === 'Success' ? 'success.main' : 'error.main', fontWeight: 600 }}>
                      {log.status === 'Success' ? 'Thành công' : (log.status || 'Thành công')}
