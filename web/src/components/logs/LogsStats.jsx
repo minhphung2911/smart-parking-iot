@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import { Card, CardContent, Grid, Stack, Typography, Box } from "@mui/material";
 
 const StatBox = ({ label, count, colorHex }) => (
@@ -25,42 +24,6 @@ const LogsStats = ({ stats }) => {
       <StatBox label="Thao tác thủ công" count={stats.manual || 0} colorHex="#3b82f6" />
       <StatBox label="Sự kiện lỗi" count={stats.faults || 0} colorHex="#3f3f46" />
     </Stack>
-=======
-import { Box, Card, CardContent, Typography, Grid } from "@mui/material";
-import LoginIcon from "@mui/icons-material/Login";
-import LogoutIcon from "@mui/icons-material/Logout";
-import BuildIcon from "@mui/icons-material/Build";
-import ErrorIcon from "@mui/icons-material/Error";
-
-const LogsStats = ({ stats }) => {
-  const items = [
-    { label: "Check-ins", value: stats.checkins, icon: <LoginIcon />, color: "success" },
-    { label: "Check-outs", value: stats.checkouts, icon: <LogoutIcon />, color: "info" },
-    { label: "Manual Ops", value: stats.manual, icon: <BuildIcon />, color: "warning" },
-    { label: "Faults", value: stats.faults, icon: <ErrorIcon />, color: "error" },
-  ];
-
-  return (
-    <Grid container spacing={2}>
-      {items.map((item) => (
-        <Grid item xs={6} md={3} key={item.label}>
-          <Card>
-            <CardContent sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Box color={`${item.color}.main`}>{item.icon}</Box>
-              <Box>
-                <Typography variant="h6" fontWeight={600}>
-                  {item.value}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {item.label}
-                </Typography>
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      ))}
-    </Grid>
->>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
   );
 };
 
