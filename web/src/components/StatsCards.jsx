@@ -27,10 +27,10 @@ const KPICard = ({ label, value, delta, isPositive, degraded, connectionState })
         {degraded ? (
            <Box sx={{ mt: 1 }}>
              <Typography variant="body2" sx={{ color: '#ef5350', fontWeight: 600 }}>
-               ⚠️ Service unavailable
+               ⚠️ Dịch vụ không khả dụng
              </Typography>
              <Typography variant="caption" color="text.secondary">
-               Link to backend interrupted
+               Kết nối với máy chủ bị gián đoạn
              </Typography>
            </Box>
         ) : (
@@ -74,32 +74,50 @@ const StatsCards = ({ isSocketConnected, systemMode, connectionState }) => {
 
   return (
     <Grid container spacing={2}>
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} sm={6} md={4}>
         <KPICard 
-          label="Total Cars" 
+          label="Tổng số chỗ đỗ" 
+          value={stats.totalSlots ?? 0} 
+          degraded={isDegraded}
+          connectionState={connectionState}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        <KPICard 
+          label="Đang sử dụng" 
           value={stats.occupied ?? 0} 
-          delta="+12%" 
-          isPositive={true} 
           degraded={isDegraded}
           connectionState={connectionState}
         />
       </Grid>
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} sm={6} md={4}>
         <KPICard 
-          label="Available Slots" 
+          label="Còn trống" 
           value={stats.available ?? 0} 
-          delta="-2" 
-          isPositive={false} 
           degraded={isDegraded}
           connectionState={connectionState}
         />
       </Grid>
-      <Grid item xs={12} md={4}>
+      <Grid item xs={12} sm={6} md={4}>
         <KPICard 
-          label="Net Revenue Today" 
-          value={`$${(stats.revenueToday ?? 0).toLocaleString()}`} 
-          delta="+5.4%" 
-          isPositive={true} 
+          label="Xe vào hôm nay" 
+          value={stats.carsInToday ?? 0} 
+          degraded={isDegraded}
+          connectionState={connectionState}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        <KPICard 
+          label="Xe ra hôm nay" 
+          value={stats.carsOutToday ?? 0} 
+          degraded={isDegraded}
+          connectionState={connectionState}
+        />
+      </Grid>
+      <Grid item xs={12} sm={6} md={4}>
+        <KPICard 
+          label="Doanh thu hôm nay" 
+          value={`${(stats.revenueToday ?? 0).toLocaleString()}đ`} 
           degraded={isDegraded}
           connectionState={connectionState}
         />

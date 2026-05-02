@@ -19,17 +19,17 @@ const drawerWidth = 240;
 
 const navGroups = [
   {
-    title: "MAIN",
+    title: "CHÍNH",
     items: [
-      { key: "dashboard", label: "Dashboard", icon: <DashboardRoundedIcon /> },
-      { key: "parking-slots", label: "Parking Slots", icon: <LocalParkingRoundedIcon /> },
+      { key: "dashboard", label: "Bảng điều khiển", icon: <DashboardRoundedIcon /> },
+      { key: "parking-slots", label: "Vị trí đỗ xe", icon: <LocalParkingRoundedIcon /> },
     ],
   },
   {
-    title: "SYSTEM",
+    title: "HỆ THỐNG",
     items: [
-      { key: "logs", label: "Logs", icon: <ReceiptLongRoundedIcon /> },
-      { key: "analytics", label: "Analytics", icon: <InsightsRoundedIcon /> },
+      { key: "logs", label: "Nhật ký", icon: <ReceiptLongRoundedIcon /> },
+      { key: "reports", label: "Báo cáo", icon: <InsightsRoundedIcon /> },
     ],
   },
 ];

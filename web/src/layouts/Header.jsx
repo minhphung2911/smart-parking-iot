@@ -43,12 +43,12 @@ const Header = ({
 
   const freshnessConfig =
     freshnessState === "syncing"
-      ? { label: "Syncing", color: "warning.main", bg: "rgba(237,108,2,0.14)" }
+      ? { label: "Đang đồng bộ", color: "warning.main", bg: "rgba(237,108,2,0.14)" }
       : freshnessState === "delayed"
-      ? { label: "Delayed", color: "warning.main", bg: "rgba(237,108,2,0.14)" }
+      ? { label: "Bị trễ", color: "warning.main", bg: "rgba(237,108,2,0.14)" }
       : freshnessState === "stale"
-      ? { label: "Stale", color: "error.main", bg: "rgba(211,47,47,0.12)" }
-      : { label: "Live", color: "success.main", bg: "rgba(46,125,50,0.14)" };
+      ? { label: "Cũ", color: "error.main", bg: "rgba(211,47,47,0.12)" }
+      : { label: "Trực tiếp", color: "success.main", bg: "rgba(46,125,50,0.14)" };
 
   const lastUpdatedLabel = lastUpdatedAt
     ? new Date(lastUpdatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
@@ -75,7 +75,7 @@ const Header = ({
           ) : null}
           <Box>
             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 600 }}>
-              Overview
+              Tổng quan
             </Typography>
             <Typography variant="h5">{title}</Typography>
           </Box>
@@ -120,10 +120,10 @@ const Header = ({
             />
             <Box>
               <Typography variant="caption" color="text.secondary" display="block">
-                Real-time
+                Thời gian thực
               </Typography>
               <Typography variant="body2" fontWeight={700}>
-                {isSocketConnected ? "Connected" : "Disconnected"}
+                {isSocketConnected ? "Đã kết nối" : "Mất kết nối"}
               </Typography>
             </Box>
           </Stack>
@@ -143,13 +143,13 @@ const Header = ({
             }}
           >
             <Typography variant="caption" color="text.secondary" display="block">
-              Local Time
+              Giờ địa phương
             </Typography>
             <Typography variant="body2" fontWeight={700} letterSpacing={0.2}>
               {formattedTime}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Updated {lastUpdatedLabel}
+              Cập nhật {lastUpdatedLabel}
             </Typography>
           </Box>
 
