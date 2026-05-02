@@ -81,7 +81,7 @@ const SlotGrid = ({ isSocketConnected, systemMode, connectionState }) => {
       patch[id] = true;
       const state = statusMap[id];
       if (typeof state === "boolean") {
-        labels[id] = state ? "Occupied" : "Freed";
+        labels[id] = state ? "Đã đỗ" : "Đã trống";
       }
     });
 
@@ -151,7 +151,7 @@ const SlotGrid = ({ isSocketConnected, systemMode, connectionState }) => {
     <Box sx={{ position: 'relative' }}>
       {isDegraded && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 2, fontWeight: 600 }}>
-          ⚠️ Infrastructure communication offline. Displaying last known state.
+          ⚠️ Kết nối hạ tầng ngoại tuyến. Đang hiển thị trạng thái cuối cùng.
         </Alert>
       )}
       
@@ -159,8 +159,8 @@ const SlotGrid = ({ isSocketConnected, systemMode, connectionState }) => {
         <SlotGridSkeleton />
       ) : (
         <Stack spacing={3} sx={{ opacity: isDegraded ? 0.7 : 1 }}>
-          {renderGroup("Available", availableSlots)}
-          {renderGroup("Occupied", occupiedSlots)}
+          {renderGroup("Trống", availableSlots)}
+          {renderGroup("Đang đỗ", occupiedSlots)}
         </Stack>
       )}
       

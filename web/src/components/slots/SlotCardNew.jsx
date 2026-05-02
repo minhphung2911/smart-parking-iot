@@ -61,7 +61,7 @@ const SlotCardNew = ({ slot, onClick, isRecentlyUpdated }) => {
             {slot.name || `Slot ${slot.id}`}
           </Typography>
           <Typography variant="caption" sx={{ color: accentColor, fontWeight: 700, fontSize: '0.7rem', textTransform: 'uppercase' }}>
-            {slot.logicStatus}
+            {slot.logicStatus === 'Occupied' ? 'Đang đỗ' : slot.logicStatus === 'Available' ? 'Trống' : slot.logicStatus === 'Reserved' ? 'Đã đặt' : 'Lỗi'}
           </Typography>
         </Stack>
         
@@ -69,7 +69,7 @@ const SlotCardNew = ({ slot, onClick, isRecentlyUpdated }) => {
         {slot.logicStatus === 'Occupied' && (
           <Box sx={{ mt: 1 }}>
             <Typography variant="caption" sx={{ color: '#0a0a0a', fontWeight: 600, display: 'block' }}>
-              {slot.plateNumber || 'Unknown Plate'}
+              {slot.plateNumber || 'Không rõ biển số'}
             </Typography>
             <Typography variant="caption" sx={{ color: '#697386' }}>
               {slot.entryTime ? new Date(slot.entryTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '---'}
@@ -79,19 +79,19 @@ const SlotCardNew = ({ slot, onClick, isRecentlyUpdated }) => {
 
         {slot.logicStatus === 'Reserved' && (
           <Box sx={{ mt: 1 }}>
-            <Typography variant="caption" sx={{ color: '#697386' }}>ETA pending</Typography>
+            <Typography variant="caption" sx={{ color: '#697386' }}>Đang chờ...</Typography>
           </Box>
         )}
 
         {slot.logicStatus === 'Fault' && (
           <Box sx={{ mt: 1 }}>
-            <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600 }}>Sensor Error</Typography>
+            <Typography variant="caption" sx={{ color: '#ef4444', fontWeight: 600 }}>Lỗi cảm biến</Typography>
           </Box>
         )}
 
         {slot.logicStatus === 'Available' && (
           <Box sx={{ mt: 1 }}>
-            <Typography variant="caption" sx={{ color: '#697386' }}>Empty</Typography>
+            <Typography variant="caption" sx={{ color: '#697386' }}>Còn trống</Typography>
           </Box>
         )}
       </Stack>

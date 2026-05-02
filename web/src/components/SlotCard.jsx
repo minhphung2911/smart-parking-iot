@@ -35,7 +35,7 @@ const SlotCard = ({ slotName, isOccupied }) => {
           {slotName}
         </Typography>
         <Typography variant="caption" sx={{ color: '#697386', mt: 0.5 }}>
-          {isOccupied ? 'Occupied' : 'Available'}
+          {isOccupied ? 'Đang đỗ' : 'Trống'}
         </Typography>
       </Stack>
     </Card>

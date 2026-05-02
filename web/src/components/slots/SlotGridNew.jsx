@@ -64,7 +64,7 @@ const SlotGridNew = ({ slots, isLoading, onSlotClick, viewMode }) => {
   if (slots.length === 0) {
     return (
       <Box sx={{ py: 8, textAlign: 'center' }}>
-        <Typography variant="body1" color="text.secondary">No parking slots found matching the criteria.</Typography>
+        <Typography variant="body1" color="text.secondary">Không tìm thấy vị trí đỗ xe nào khớp với tiêu chí.</Typography>
       </Box>
     );
   }
@@ -75,10 +75,10 @@ const SlotGridNew = ({ slots, isLoading, onSlotClick, viewMode }) => {
         <Table size="small">
           <TableHead sx={{ bgcolor: 'background.default' }}>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600 }}>IDENTIFIER</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>STATUS</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>PLATE</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 600 }}>DURATION (MIN)</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>MÃ ĐỊNH DANH</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>TRẠNG THÁI</TableCell>
+              <TableCell sx={{ fontWeight: 600 }}>BIỂN SỐ</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>THỜI LƯỢNG (PHÚT)</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -101,11 +101,17 @@ const SlotGridNew = ({ slots, isLoading, onSlotClick, viewMode }) => {
                     transition: 'background-color 0.5s ease'
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 600 }}>{slot.name || `Slot ${slot.id}`}</TableCell>
+                  <TableCell sx={{ fontWeight: 600 }}>{slot.name || `Chỗ ${slot.id}`}</TableCell>
                   <TableCell>
-                    <Chip label={slot.logicStatus} size="small" color={getStatusColor(slot.logicStatus)} variant={slot.logicStatus === 'Available' ? 'outlined' : 'filled'} sx={{ fontWeight: 600, fontSize: '0.7rem' }} />
+                    <Chip 
+                      label={slot.logicStatus === 'Occupied' ? 'Đang đỗ' : slot.logicStatus === 'Available' ? 'Trống' : slot.logicStatus === 'Reserved' ? 'Đã đặt' : 'Lỗi'} 
+                      size="small" 
+                      color={getStatusColor(slot.logicStatus)} 
+                      variant={slot.logicStatus === 'Available' ? 'outlined' : 'filled'} 
+                      sx={{ fontWeight: 600, fontSize: '0.7rem' }} 
+                    />
                   </TableCell>
-                  <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>{slot.logicStatus === 'Occupied' ? (slot.plateNumber || 'Unknown') : '---'}</TableCell>
+                  <TableCell sx={{ color: 'text.secondary', fontWeight: 500 }}>{slot.logicStatus === 'Occupied' ? (slot.plateNumber || 'Không rõ') : '---'}</TableCell>
                   <TableCell align="right" sx={{ color: 'text.secondary' }}>{duration}</TableCell>
                 </TableRow>
               );

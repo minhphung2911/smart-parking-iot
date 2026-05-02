@@ -20,10 +20,10 @@ const StatBox = ({ label, count, colorHex }) => (
 const SlotStats = ({ stats }) => {
   return (
     <Stack direction={{ xs: 'column', md: 'row' }} spacing={3}>
-      <StatBox label="Available" count={stats.available || 0} colorHex="#22c55e" />
-      <StatBox label="Occupied" count={stats.occupied || 0} colorHex="#ef4444" />
-      <StatBox label="Reserved" count={stats.reserved || 0} colorHex="#f59e0b" />
-      <StatBox label="Fault" count={stats.fault || 0} colorHex="#3f3f46" />
+      <StatBox label="Trống" count={stats.available || 0} colorHex="#22c55e" />
+      <StatBox label="Đang đỗ" count={stats.occupied || 0} colorHex="#ef4444" />
+      <StatBox label="Đã đặt" count={stats.reserved || 0} colorHex="#f59e0b" />
+      <StatBox label="Lỗi" count={stats.fault || 0} colorHex="#3f3f46" />
     </Stack>
   );
 };

@@ -11,7 +11,7 @@ const SlotToolbar = ({ filter, setFilter, search, setSearch, viewMode, setViewMo
         {/* Search */}
         <TextField
           size="small"
-          placeholder="Search slot or plate..."
+          placeholder="Tìm vị trí hoặc biển số..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           InputProps={{
@@ -33,11 +33,11 @@ const SlotToolbar = ({ filter, setFilter, search, setSearch, viewMode, setViewMo
             onChange={(e, val) => val && setFilter(val)}
             sx={{ bgcolor: 'background.paper' }}
           >
-            <ToggleButton value="All" sx={{ px: 2, fontWeight: 600 }}>All</ToggleButton>
-            <ToggleButton value="Available" sx={{ px: 2, fontWeight: 600, color: 'success.dark' }}>Available</ToggleButton>
-            <ToggleButton value="Occupied" sx={{ px: 2, fontWeight: 600, color: 'error.dark' }}>Occupied</ToggleButton>
-            <ToggleButton value="Reserved" sx={{ px: 2, fontWeight: 600, color: 'warning.dark' }}>Reserved</ToggleButton>
-            <ToggleButton value="Fault" sx={{ px: 2, fontWeight: 600, color: 'text.secondary' }}>Fault</ToggleButton>
+            <ToggleButton value="All" sx={{ px: 2, fontWeight: 600 }}>Tất cả</ToggleButton>
+            <ToggleButton value="Available" sx={{ px: 2, fontWeight: 600, color: 'success.dark' }}>Trống</ToggleButton>
+            <ToggleButton value="Occupied" sx={{ px: 2, fontWeight: 600, color: 'error.dark' }}>Đang đỗ</ToggleButton>
+            <ToggleButton value="Reserved" sx={{ px: 2, fontWeight: 600, color: 'warning.dark' }}>Đã đặt</ToggleButton>
+            <ToggleButton value="Fault" sx={{ px: 2, fontWeight: 600, color: 'text.secondary' }}>Lỗi</ToggleButton>
           </ToggleButtonGroup>
 
           {/* View Mode */}

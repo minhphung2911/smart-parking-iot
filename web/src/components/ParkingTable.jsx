@@ -44,7 +44,7 @@ const ActivityTable = ({ isSocketConnected, systemMode, connectionState }) => {
     <Box sx={{ mt: 2 }}>
       {isDegraded && (
         <Alert severity="warning" variant="outlined" sx={{ mb: 2, py: 0.5, border: '1px dashed' }}>
-          Historical feed interrupted.
+          Luồng lịch sử bị gián đoạn.
         </Alert>
       )}
       
@@ -57,10 +57,10 @@ const ActivityTable = ({ isSocketConnected, systemMode, connectionState }) => {
         <Table size="small">
           <TableHead>
             <TableRow sx={{ backgroundColor: '#fafafa' }}>
-              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>TIME</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>ACTION</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>PLATE</TableCell>
-              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>SLOT</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>THỜI GIAN</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>HÀNH ĐỘNG</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>BIỂN SỐ</TableCell>
+              <TableCell sx={{ fontWeight: 600, color: '#697386', py: 1.5 }}>VỊ TRÍ</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -81,7 +81,7 @@ const ActivityTable = ({ isSocketConnected, systemMode, connectionState }) => {
             {logs.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 4, color: '#697386' }}>
-                  {isDegraded ? "Data source unavailable" : "No recent activity records."}
+                  {isDegraded ? "Nguồn dữ liệu không khả dụng" : "Không có bản ghi hoạt động gần đây."}
                 </TableCell>
               </TableRow>
             )}
