@@ -4,7 +4,7 @@ import ParkingSlots from "./pages/ParkingSlots";
 import { SystemProvider } from "./context/SystemContext";
 
 import Logs from "./pages/Logs";
-import Analytics from "./pages/Analytics";
+import Reports from "./pages/Reports";
 
 function App() {
   return (
@@ -15,7 +15,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/parking-slots" element={<ParkingSlots />} />
           <Route path="/logs" element={<Logs />} />
-          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/reports" element={<Reports />} />
         </Routes>
       </SystemProvider>
     </BrowserRouter>
