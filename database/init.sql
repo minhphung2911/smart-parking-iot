@@ -22,7 +22,7 @@ GO
 ========================================================= */
 
 CREATE TABLE ParkingSlots (
-    SlotID INT IDENTITY PRIMARY KEY,
+    SlotID INT PRIMARY KEY,
     SlotCode NVARCHAR(10) UNIQUE NOT NULL,
     Zone NVARCHAR(10),
     FloorNo INT DEFAULT 1,
@@ -70,6 +70,7 @@ CREATE TABLE Logs (
 );
 GO
 
+<<<<<<< HEAD
 -- Table for WinForms Legacy Compatibility
 CREATE TABLE ParkingLog (
     Id INT IDENTITY PRIMARY KEY,
@@ -78,6 +79,20 @@ CREATE TABLE ParkingLog (
     TimeOut DATETIME,
     SlotNumber INT,
     Fee DECIMAL(18,2)
+=======
+/* =========================================================
+   WINFORMS COMPATIBILITY TABLE
+   Legacy ParkingLog table for WinForms desktop app
+========================================================= */
+
+CREATE TABLE ParkingLog (
+    Id INT IDENTITY PRIMARY KEY,
+    Plate NVARCHAR(20) NOT NULL,
+    TimeIn DATETIME NOT NULL DEFAULT GETDATE(),
+    TimeOut DATETIME NULL,
+    SlotNumber INT NOT NULL,
+    Fee DECIMAL(18,2) DEFAULT 0
+>>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
 );
 GO
 
@@ -97,17 +112,54 @@ GO
 
 
 /* =========================================================
+<<<<<<< HEAD
    2. INSERT PARKING SLOTS (5 slots ONLY)
+=======
+   2. INSERT PARKING SLOTS (5 slots for WinForms)
+>>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
 ========================================================= */
 
-INSERT INTO ParkingSlots (SlotCode, Zone, FloorNo, DistanceFromGate, Status)
+INSERT INTO ParkingSlots (SlotID, SlotCode, Zone, FloorNo, DistanceFromGate, Status)
 VALUES
+<<<<<<< HEAD
 ('A1','A',1,1,'Available'),
 ('A2','A',1,2,'Available'),
 ('A3','A',1,3,'Available'),
 ('B1','B',1,4,'Available'),
 ('B2','B',1,5,'Available');
 GO
+=======
+(1,'S1','A',1,1,'Available'),
+(2,'S2','A',1,2,'Available'),
+(3,'S3','A',1,3,'Available'),
+(4,'S4','A',1,4,'Available'),
+(5,'S5','A',1,5,'Available');
+GO
+
+
+/* =========================================================
+   3. VEHICLES - No seed data (inserted by application)
+========================================================= */
+-- Empty
+
+
+/* =========================================================
+   4. PARKING SESSIONS - No seed data (inserted by application)
+========================================================= */
+-- Empty
+
+
+/* =========================================================
+   5. LOGS - No seed data (inserted by application)
+========================================================= */
+-- Empty
+
+
+/* =========================================================
+   6. SYSTEM FAULTS - No seed data
+========================================================= */
+-- Empty
+>>>>>>> 060c646655c4e2280012ae4e519582d7af9eaf4d
 
 
 /* =========================================================
