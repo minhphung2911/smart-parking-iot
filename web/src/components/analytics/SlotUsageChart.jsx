@@ -11,14 +11,18 @@ const data = [
   { slot: "D4", usage: 15 },
 ];
 
-const SlotUsageChart = () => {
+const SlotUsageChart = ({ data: chartData }) => {
+  const displayData = chartData?.length > 0 ? chartData : [
+    { slot: "---", usage: 0 },
+  ];
+
   return (
     <Card sx={{ border: '1px solid rgba(0,0,0,0.06)', boxShadow: 'none', height: '100%' }}>
       <CardContent>
-        <Typography variant="subtitle1" fontWeight={600} mb={3}>Slot Usage Frequency (Top/Bottom)</Typography>
+        <Typography variant="subtitle1" fontWeight={600} mb={3}>Tần suất sử dụng vị trí (Cao/Thấp)</Typography>
         <Box sx={{ width: '100%', height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <BarChart data={displayData} layout="vertical" margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f0f0f0" />
               <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#697386', fontSize: 12 }} />
               <YAxis dataKey="slot" type="category" axisLine={false} tickLine={false} tick={{ fill: '#0a0a0a', fontWeight: 600, fontSize: 12 }} width={40} />

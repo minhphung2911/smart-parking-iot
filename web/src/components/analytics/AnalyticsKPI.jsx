@@ -27,7 +27,7 @@ const KPICard = ({ title, value, compareText, isPositive }) => (
           </Typography>
         </Box>
         <Typography variant="caption" color="text.secondary" sx={{ ml: 0.5, fontSize: '0.75rem' }}>
-          vs yesterday
+          so với hôm qua
         </Typography>
       </Stack>
     </CardContent>
@@ -38,16 +38,16 @@ const AnalyticsKPI = ({ metrics }) => {
   return (
     <Grid container spacing={3}>
       <Grid item xs={12} sm={6} md={3}>
-        <KPICard title="Total Vehicles" value={metrics.totalCars || "152"} compareText="+12%" isPositive={true} />
+        <KPICard title="Tổng lượt xe" value={metrics.totalCars || "152"} compareText="+12%" isPositive={true} />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <KPICard title="Daily Revenue" value={`$${metrics.revenue || "245"}`} compareText="+8%" isPositive={true} />
+        <KPICard title="Doanh thu ngày" value={`${metrics.revenue || "245"} VNĐ`} compareText="+8%" isPositive={true} />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <KPICard title="Avg Duration" value={metrics.avgDuration || "1h 48m"} compareText="-5m" isPositive={false} />
+        <KPICard title="Thời gian đỗ TB" value={metrics.avgDuration || "1h 48m"} compareText="-5m" isPositive={false} />
       </Grid>
       <Grid item xs={12} sm={6} md={3}>
-        <KPICard title="Peak Occupancy" value={`${metrics.occupancy || "82"}%`} compareText="+3%" isPositive={true} />
+        <KPICard title="Tỷ lệ lấp đầy cao nhất" value={`${metrics.occupancy || "82"}%`} compareText="+3%" isPositive={true} />
       </Grid>
     </Grid>
   );

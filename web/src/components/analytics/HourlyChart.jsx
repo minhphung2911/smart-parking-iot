@@ -14,14 +14,22 @@ const data = [
   { time: "3 PM", vehicles: 25 },
 ];
 
-const HourlyChart = () => {
+const HourlyChart = ({ data: chartData }) => {
+  const displayData = chartData?.length > 0 ? chartData : [
+    { time: "08:00", vehicles: 0 },
+    { time: "10:00", vehicles: 0 },
+    { time: "12:00", vehicles: 0 },
+    { time: "14:00", vehicles: 0 },
+    { time: "16:00", vehicles: 0 },
+  ];
+
   return (
     <Card sx={{ border: '1px solid rgba(0,0,0,0.06)', boxShadow: 'none', height: '100%' }}>
       <CardContent>
-        <Typography variant="subtitle1" fontWeight={600} mb={3}>Peak Hourly Check-ins</Typography>
+        <Typography variant="subtitle1" fontWeight={600} mb={3}>Lượt vào cao điểm theo giờ</Typography>
         <Box sx={{ width: '100%', height: 300 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+            <LineChart data={displayData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
               <XAxis dataKey="time" axisLine={false} tickLine={false} tick={{ fill: '#697386', fontSize: 12 }} dy={10} />
               <YAxis axisLine={false} tickLine={false} tick={{ fill: '#697386', fontSize: 12 }} />

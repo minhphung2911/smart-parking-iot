@@ -27,33 +27,33 @@ const InsightPanel = () => {
       <CardContent>
         <Stack direction="row" alignItems="center" spacing={1} mb={3}>
           <InsightsIcon color="primary" />
-          <Typography variant="subtitle1" fontWeight={700} color="primary.dark">AI Predictive Insights</Typography>
+          <Typography variant="subtitle1" fontWeight={700} color="primary.dark">Thông tin dự báo AI</Typography>
         </Stack>
 
         <Stack spacing={0} divider={<Divider />}>
           <InsightRow 
             icon={<AccessTimeIcon />} 
-            title="Current Peak Hour" 
+            title="Giờ cao điểm hiện tại" 
             value="8:00 AM - 10:00 AM" 
-            detail="Predict tomorrow: 8:15 AM" 
+            detail="Dự báo ngày mai: 8:15 AM" 
           />
           <InsightRow 
             icon={<LocalParkingIcon />} 
-            title="Most Used Slot" 
-            value="A1 (85 visits)" 
-            detail="Recommend VIP Pricing" 
+            title="Vị trí được dùng nhiều nhất" 
+            value="A1 (85 lượt)" 
+            detail="Đề xuất giá VIP" 
           />
           <InsightRow 
             icon={<LocalParkingIcon sx={{ opacity: 0.5 }} />} 
-            title="Lowest Usage Slot" 
-            value="D4 (15 visits)" 
-            detail="Check for obstructions" 
+            title="Vị trí ít được dùng nhất" 
+            value="D4 (15 lượt)" 
+            detail="Kiểm tra vật cản" 
           />
           <InsightRow 
             icon={<LightbulbCircleIcon />} 
-            title="Average Stay" 
-            value="1h 48m" 
-            detail="Optimal turnover rate" 
+            title="Thời gian đỗ trung bình" 
+            value="1 giờ 48 phút" 
+            detail="Tỷ lệ quay vòng tối ưu" 
           />
         </Stack>
       </CardContent>
