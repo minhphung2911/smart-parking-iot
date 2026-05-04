@@ -10,32 +10,6 @@ import LogsStats from "../components/logs/LogsStats";
 import LogsToolbar from "../components/logs/LogsToolbar";
 import LogsTable from "../components/logs/LogsTable";
 
-// Generate robust mock logs to demonstrate the view if backend is empty
-const generateMockLogs = () => {
-  const actions = ["Check-in", "Check-out", "Assign", "Transfer", "Fault", "Reserved"];
-  const users = ["System", "Auto Sensor", "Admin", "Operator"];
-  const logs = [];
-  const now = new Date();
-  
-  for (let i = 0; i < 45; i++) {
-    const action = actions[Math.floor(Math.random() * actions.length)];
-    const isFault = action === "Fault";
-    logs.push({
-      id: 1000 - i,
-      eventTime: new Date(now.getTime() - Math.random() * 86400000).toISOString(),
-      actionType: action,
-      plateNumber: isFault ? "" : `67A-${Math.floor(10000 + Math.random() * 90000)}`,
-      slotCode: `${['A','B','C','D'][Math.floor(Math.random()*4)]}${Math.floor(1+Math.random()*5)}`,
-      username: action === "Check-in" || action === "Check-out" ? "Auto Sensor" : users[Math.floor(Math.random() * users.length)],
-      status: isFault ? "Error" : "Success",
-      details: isFault ? "Proximity sensor detached or blocked." : "Standard operation completed successfully."
-    });
-  }
-  return logs.sort((a,b) => new Date(b.eventTime) - new Date(a.eventTime));
-};
-
-const MOCK_LOGS = generateMockLogs();
-
 const Logs = () => {
   const { isSocketConnected, connectionState, systemMode, lastUpdatedAt } = useSystemContext();
   
@@ -50,8 +24,8 @@ const Logs = () => {
     refetchInterval: isSocketConnected ? 5000 : 15000,
   });
 
-  // Fallback to mock if API is empty/down to showcase the rich UI
-  const rawLogs = apiLogs.length > 0 ? apiLogs : MOCK_LOGS;
+  // Use real data from API only
+  const rawLogs = apiLogs;
 
   const filteredLogs = useMemo(() => {
     return rawLogs.filter(log => {

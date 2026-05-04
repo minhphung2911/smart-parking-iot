@@ -26,23 +26,35 @@ Servo gate;
 
 int fakeSlotPins[5] = {12, 13, A0, A1, A2};
 
-// ===== VARIABLES =====
-bool lastEnter = HIGH;
-bool lastBack  = HIGH;
-
+// ===== SENSOR STATE =====
 int slots[5];
+int lastSlots[5] = {-1, -1, -1, -1, -1};
 int emptySlots = 0;
 
-unsigned long lastEvent = 0;
-int interval = 3000;
-
-// Direction detection
+// ===== DIRECTION DETECTION =====
+bool lastEnter = HIGH;
+bool lastBack  = HIGH;
 unsigned long enterBlockedTime = 0;
 unsigned long backBlockedTime = 0;
-const unsigned long DIRECTION_TIMEOUT = 2000; // 2 giây để xác định hướng
+const unsigned long DIRECTION_TIMEOUT = 2000;
 
-// ===== VARIABLES FLAG =====
-bool manualSlotChange = false;  // Flag when there is a manual command
+// ===== NON-BLOCKING TIMERS =====
+unsigned long lastLcdUpdate = 0;
+const unsigned long LCD_INTERVAL = 400;
+
+unsigned long lastSerialSend = 0;
+const unsigned long SERIAL_INTERVAL = 500;
+
+// ===== GATE STATE MACHINE =====
+enum GateState { GATE_IDLE, GATE_OPEN, GATE_WAIT_CLOSE, GATE_CLOSING };
+GateState gateState = GATE_IDLE;
+unsigned long gateTimer = 0;
+const unsigned long GATE_OPEN_DURATION = 3000;
+const unsigned long GATE_CLOSE_DURATION = 1000;
+
+// ===== FLAGS =====
+bool manualSlotChange = false;
+bool slotsChanged = false;
 
 void setup() {
   Serial.begin(9600);
@@ -56,13 +68,12 @@ void setup() {
   pinMode(S4, INPUT);
   pinMode(S5, INPUT);
 
-  // OUTPUT fake sensor
   pinMode(F_ENTER, OUTPUT);
   pinMode(F_BACK, OUTPUT);
 
   for (int i = 0; i < 5; i++) {
     pinMode(fakeSlotPins[i], OUTPUT);
-    digitalWrite(fakeSlotPins[i], HIGH); // mặc định trống
+    digitalWrite(fakeSlotPins[i], HIGH);
   }
 
   digitalWrite(F_ENTER, HIGH);
@@ -77,18 +88,95 @@ void setup() {
   lcd.backlight();
 }
 
-void loop() {
+// ===== NON-BLOCKING GATE CONTROL =====
+void gateOpen() {
+  if (gateState != GATE_IDLE) return;
+  gateState = GATE_OPEN;
+  gateTimer = millis();
+  gate.attach(SERVO_PIN);
+  gate.write(90);
+}
 
-  // ===== NHẬN LỆNH TỪ WINFORMS =====
+void updateGate() {
+  unsigned long now = millis();
+  switch (gateState) {
+    case GATE_OPEN:
+      if (now - gateTimer >= GATE_OPEN_DURATION) {
+        gate.write(0);
+        gateState = GATE_WAIT_CLOSE;
+        gateTimer = now;
+      }
+      break;
+    case GATE_WAIT_CLOSE:
+      if (now - gateTimer >= GATE_CLOSE_DURATION) {
+        gateState = GATE_IDLE;
+        Serial.println("GATE:CLOSED");
+      }
+      break;
+    default:
+      break;
+  }
+}
+
+// ===== LCD: ONLY UPDATE WHEN NEEDED =====
+void updateLcd() {
+  unsigned long now = millis();
+  if (now - lastLcdUpdate < LCD_INTERVAL && !slotsChanged) return;
+  lastLcdUpdate = now;
+
+  lcd.setCursor(0, 0);
+  lcd.print("[MAN] Slot:");
+  lcd.print(emptySlots);
+  lcd.print("   "); // overwrite trailing chars
+
+  lcd.setCursor(0, 1);
+  lcd.print("S1:");
+  lcd.print(slots[0] == HIGH ? "Empty " : "Fill ");
+  lcd.print("S2:");
+  lcd.print(slots[1] == HIGH ? "Empty " : "Fill ");
+  lcd.print("  ");
+
+  lcd.setCursor(0, 2);
+  lcd.print("S3:");
+  lcd.print(slots[2] == HIGH ? "Empty " : "Fill ");
+  lcd.print("S4:");
+  lcd.print(slots[3] == HIGH ? "Empty " : "Fill ");
+  lcd.print("  ");
+
+  lcd.setCursor(0, 3);
+  lcd.print("S5:");
+  lcd.print(slots[4] == HIGH ? "Empty " : "Fill ");
+  lcd.print("        ");
+}
+
+// ===== SERIAL: SEND AT LIMITED RATE =====
+void sendSlots() {
+  unsigned long now = millis();
+  if (now - lastSerialSend < SERIAL_INTERVAL) return;
+  lastSerialSend = now;
+
+  if (!manualSlotChange) {
+    Serial.print("SLOTS:");
+    for (int i = 0; i < 5; i++) {
+      Serial.print(slots[i]);
+      if (i < 4) Serial.print(",");
+    }
+    Serial.println();
+  }
+  manualSlotChange = false;
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  // ===== HANDLE SERIAL COMMANDS =====
   if (Serial.available()) {
     String cmd = Serial.readStringUntil('\n');
     cmd.trim();
-    
+
     if (cmd.startsWith("SLOT:")) {
-      // Lệnh manual: SLOT:0,1 (set slot 0 = 1 = occupied)
       int slotIndex = cmd.substring(5, 6).toInt();
       int slotValue = cmd.substring(7, 8).toInt();
-      
       if (slotIndex >= 0 && slotIndex < 5) {
         digitalWrite(fakeSlotPins[slotIndex], slotValue == 1 ? LOW : HIGH);
         manualSlotChange = true;
@@ -96,60 +184,31 @@ void loop() {
       }
     }
     else if (cmd == "GATE:ENTRY" || cmd == "GATE:EXIT") {
-      // Mở cổng (dùng chung 1 cổng cho vào và ra)
       Serial.println("GATE:OPENING");
-      gate.attach(SERVO_PIN);
-      gate.write(90);  // Mở
-      delay(3000);     // Chờ 3 giây
-      gate.write(0);   // Đóng
-      delay(1000);     // Chờ servo về vị trí 0
-      Serial.println("GATE:CLOSED");
+      gateOpen();
     }
   }
 
   // ===== READ SLOTS =====
-  slots[0] = digitalRead(S1);
-  slots[1] = digitalRead(S2);
-  slots[2] = digitalRead(S3);
-  slots[3] = digitalRead(S4);
-  slots[4] = digitalRead(S5);
+  slotsChanged = false;
+  for (int i = 0; i < 5; i++) {
+    slots[i] = digitalRead(fakeSlotPins[i]);
+    if (slots[i] != lastSlots[i]) {
+      slotsChanged = true;
+      lastSlots[i] = slots[i];
+    }
+  }
 
-  // ===== ĐẾM SLOT =====
+  // ===== COUNT EMPTY SLOTS =====
   emptySlots = 0;
   for (int i = 0; i < 5; i++) {
     if (slots[i] == HIGH) emptySlots++;
   }
 
-  // ===== LCD =====
-  lcd.clear();
-
-  lcd.setCursor(0, 0);
-  lcd.print("[MAN] ");
-  lcd.print("Slot:");
-  lcd.print(emptySlots);
-
-  lcd.setCursor(0, 1);
-  lcd.print("S1:");
-  lcd.print(slots[0] == HIGH ? "Empty " : "Fill ");
-  lcd.print("S2:");
-  lcd.print(slots[1] == HIGH ? "Empty" : "Fill");
-
-  lcd.setCursor(0, 2);
-  lcd.print("S3:");
-  lcd.print(slots[2] == HIGH ? "Empty " : "Fill ");
-  lcd.print("S4:");
-  lcd.print(slots[3] == HIGH ? "Empty" : "Fill");
-
-  lcd.setCursor(0, 3);
-  lcd.print("S5:");
-  lcd.print(slots[4] == HIGH ? "Empty" : "Fill");
-
   // ===== DIRECTION DETECTION =====
   int currentEnter = digitalRead(IR_ENTER);
   int currentBack = digitalRead(IR_BACK);
-  unsigned long now = millis();
 
-  // Ghi nhận thời điểm IR bị che
   if (lastEnter == HIGH && currentEnter == LOW) {
     enterBlockedTime = now;
   }
@@ -157,41 +216,28 @@ void loop() {
     backBlockedTime = now;
   }
 
-  // Xe vào: IR_ENTER bị che trước, sau đó IR_BACK bị che trong vòng 2 giây
   if (enterBlockedTime > 0 && backBlockedTime > 0) {
-    if (enterBlockedTime < backBlockedTime && (backBlockedTime - enterBlockedTime) < DIRECTION_TIMEOUT) {
-      // Xe vào
+    unsigned long diff = backBlockedTime - enterBlockedTime;
+    unsigned long diffBack = enterBlockedTime - backBlockedTime;
+
+    if (enterBlockedTime < backBlockedTime && diff < DIRECTION_TIMEOUT) {
       if (emptySlots > 0) {
         Serial.println("ENTRY");
-        gate.attach(SERVO_PIN);
-        gate.write(90);
-        delay(3000);
-        gate.write(0);
-        delay(1000);
-        Serial.println("GATE:CLOSED");
+        gateOpen();
       } else {
         Serial.println("FULL");
       }
-      // Reset
       enterBlockedTime = 0;
       backBlockedTime = 0;
     }
-    else if (backBlockedTime < enterBlockedTime && (enterBlockedTime - backBlockedTime) < DIRECTION_TIMEOUT) {
-      // Xe ra
+    else if (backBlockedTime < enterBlockedTime && diffBack < DIRECTION_TIMEOUT) {
       Serial.println("EXIT");
-      gate.attach(SERVO_PIN);
-      gate.write(90);
-      delay(3000);
-      gate.write(0);
-      delay(1000);
-      Serial.println("GATE:CLOSED");
-      // Reset
+      gateOpen();
       enterBlockedTime = 0;
       backBlockedTime = 0;
     }
   }
 
-  // Timeout - reset nếu chỉ có 1 IR bị che mà không có cái thứ 2
   if (enterBlockedTime > 0 && (now - enterBlockedTime) > DIRECTION_TIMEOUT) {
     enterBlockedTime = 0;
   }
@@ -202,17 +248,8 @@ void loop() {
   lastEnter = currentEnter;
   lastBack = currentBack;
 
-  // ===== GỬI SLOT =====
-  // Chỉ gửi nếu không vừa thay đổi manual (cho pin ổn định)
-  if (!manualSlotChange) {
-    Serial.print("SLOTS:");
-    for (int i = 0; i < 5; i++) {
-      Serial.print(slots[i]);
-      if (i < 4) Serial.print(",");
-    }
-    Serial.println();
-  }
-
-  manualSlotChange = false;
-  delay(300);
+  // ===== UPDATE OUTPUTS =====
+  updateGate();
+  updateLcd();
+  sendSlots();
 }
